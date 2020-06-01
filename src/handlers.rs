@@ -27,36 +27,18 @@ fn get_user_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
     req.headers().get("user_id")?.to_str().ok()
 }
 
-pub async fn get_users(
-    _req: HttpRequest,
-    db: web::Data<Pool>
-) -> Result<HttpResponse, Error> {
-    Ok(web::block(move || get_all_users(db))
-        .await
-        .map(|user| HttpResponse::Ok().json(user))
-        .map_err(|_| HttpResponse::InternalServerError())?)
-}
-
-fn get_all_users(
-    pool: web::Data<Pool>
-) -> Result<Vec<User>, diesel::result::Error> {
-    let conn = pool.get().unwrap();
-    let items = users.load::<User>(&conn)?;
-    Ok(items)
-}
-
-pub async fn get_user(
+pub async fn get_me(
     req: HttpRequest,
     db: web::Data<Pool>
 ) -> Result<HttpResponse, Error> {
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>().unwrap();
-    Ok(web::block(move || get_user_info(user_id_f, db))
+    Ok(web::block(move || get_me_info(user_id_f, db))
         .await
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(|_| HttpResponse::InternalServerError())?)
 }
 
-fn get_user_info(
+fn get_me_info(
     user_id_f: i32,
     pool: web::Data<Pool>
 ) -> Result<User, diesel::result::Error> {

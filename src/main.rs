@@ -77,8 +77,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .wrap(auth)
-                    .route("/me", web::get().to(handlers::get_user))
-                    .route("/users", web::get().to(handlers::get_users))
+                    .route("/me", web::get().to(handlers::get_me))
             )
     })
     .bind("127.0.0.1:8080")?
