@@ -7,7 +7,7 @@ use crate::diesel::ExpressionMethods;
 use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
 
-use actix_web::{web, Error, HttpResponse};
+use actix_web::{web, Error, HttpRequest, HttpResponse};
 use diesel::dsl::{insert_into, exists, select};
 use serde::{Deserialize, Serialize};
 use nanoid::nanoid;
@@ -18,9 +18,15 @@ pub struct InputUser {
     pub passwd: String,
 }
 
+fn _get_user_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
+    req.headers().get("user_id")?.to_str().ok()
+}
+
 pub async fn get_users(
+    _req: HttpRequest,
     db: web::Data<Pool>
 ) -> Result<HttpResponse, Error> {
+    // let user_id_f = get_user_id(&req); -> get the user_id of the user asking for the req
     Ok(web::block(move || get_all_users(db))
         .await
         .map(|user| HttpResponse::Ok().json(user))
@@ -80,13 +86,10 @@ fn auth_single_user(
     item: web::Json<InputUser>,
 ) -> Result<AccessToken, diesel::result::Error> {
     let conn = db.get().unwrap();
-    let user_id = users.filter(email.eq(&item.email)).select(id).first(&conn);  
-    if user_id.is_ok() {
-        // TODO Check if an already existing token is present for that user
-        // If we return that one
-        // Else return a new one
+    let user_id_f = users.filter(email.eq(&item.email)).select(id).first(&conn);
+    if user_id_f.is_ok() {
         let new_access_token = NewAccessToken {
-            user_id: user_id.unwrap(),
+            user_id: user_id_f.unwrap(),
             access_token: nanoid!(64),
             refresh_token: nanoid!(64),
             created_at: chrono::Local::now().naive_local(),
