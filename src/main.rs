@@ -8,6 +8,7 @@ use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use std::str::FromStr;
+use chrono::{Duration};
 
 mod handlers;
 mod errors;
@@ -22,13 +23,16 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 
 pub fn validate_token(token: &str, pool: web::Data<Pool>) -> Result<(bool, std::string::String), ServiceError> {
     let conn = pool.get().unwrap();
-    // TODO Implement the expired token
-    let user_id_f: std::result::Result<i32, diesel::result::Error> = access_tokens.filter(access_token.eq(token)).select(user_id).first(&conn);
-    if user_id_f.is_ok() {
-        // TODO pass user_id to the req
-        Ok((true, std::string::String::from(user_id_f.unwrap().to_string())))
+    let access_token_f = access_tokens.filter(access_token.eq(token)).select((user_id, created_at)).first::<(i32, chrono::NaiveDateTime)>(&conn);
+    if access_token_f.is_ok() {
+        let data = access_token_f.unwrap();
+        if chrono::Local::now().naive_local() - Duration::hours(2) < data.1 {
+            Ok((true, String::from(data.0.to_string())))
+        } else {
+            Err(ServiceError::InvalidToken)
+        }
     } else {
-        Ok((false, std::string::String::from("no_user_id")))
+        Err(ServiceError::InvalidToken)
     }
 }
 
@@ -50,7 +54,7 @@ async fn validator(mut req: ServiceRequest, credentials: BearerAuth) -> Result<S
                 Err(AuthenticationError::from(config).into())
             }
         }
-        Err(_) => Err(AuthenticationError::from(config).into()),
+        Err(res) => Err(res.into()),
     }
 }
 
