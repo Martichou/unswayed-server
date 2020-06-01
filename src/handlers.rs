@@ -1,6 +1,6 @@
 use super::models::{NewUser, User, NewAccessToken, AccessToken};
 use super::schema::users::dsl::*;
-use super::schema::access_tokens::dsl::{access_tokens, refresh_token, user_id};
+use super::schema::access_tokens::dsl::*;
 use super::Pool;
 
 use crate::diesel::ExpressionMethods;
@@ -23,7 +23,7 @@ pub struct InputRefreshToken {
     pub refresh_token: String,
 }
 
-fn _get_user_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
+fn get_user_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
     req.headers().get("user_id")?.to_str().ok()
 }
 
@@ -31,7 +31,6 @@ pub async fn get_users(
     _req: HttpRequest,
     db: web::Data<Pool>
 ) -> Result<HttpResponse, Error> {
-    // let user_id_f = get_user_id(&req); -> get the user_id of the user asking for the req
     Ok(web::block(move || get_all_users(db))
         .await
         .map(|user| HttpResponse::Ok().json(user))
@@ -44,6 +43,26 @@ fn get_all_users(
     let conn = pool.get().unwrap();
     let items = users.load::<User>(&conn)?;
     Ok(items)
+}
+
+pub async fn get_user(
+    req: HttpRequest,
+    db: web::Data<Pool>
+) -> Result<HttpResponse, Error> {
+    let user_id_f = get_user_id(&req).unwrap().parse::<i32>().unwrap();
+    Ok(web::block(move || get_user_info(user_id_f, db))
+        .await
+        .map(|user| HttpResponse::Ok().json(user))
+        .map_err(|_| HttpResponse::InternalServerError())?)
+}
+
+fn get_user_info(
+    user_id_f: i32,
+    pool: web::Data<Pool>
+) -> Result<User, diesel::result::Error> {
+    let conn = pool.get().unwrap();
+    let user = users.filter(super::schema::users::dsl::id.eq(&user_id_f)).first::<User>(&conn)?;
+    Ok(user)
 }
 
 pub async fn add_user(
@@ -92,7 +111,7 @@ fn auth_single_user(
     item: web::Json<InputUser>,
 ) -> Result<AccessToken, diesel::result::Error> {
     let conn = db.get().unwrap();
-    let user_id_f = users.filter(email.eq(&item.email)).select(id).first(&conn);
+    let user_id_f = users.filter(email.eq(&item.email)).select(super::schema::users::dsl::id).first(&conn);
     if user_id_f.is_ok() {
         let new_access_token = NewAccessToken {
             user_id: user_id_f.unwrap(),
