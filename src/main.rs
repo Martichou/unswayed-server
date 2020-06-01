@@ -26,6 +26,8 @@ pub fn validate_token(token: &str, pool: web::Data<Pool>) -> Result<(bool, std::
     let access_token_f = access_tokens.filter(access_token.eq(token)).select((user_id, created_at)).first::<(i32, chrono::NaiveDateTime)>(&conn);
     if access_token_f.is_ok() {
         let data = access_token_f.unwrap();
+        dbg!(chrono::Local::now().naive_local() - Duration::hours(2));
+        dbg!(data.1);
         if chrono::Local::now().naive_local() - Duration::hours(2) < data.1 {
             Ok((true, String::from(data.0.to_string())))
         } else {
@@ -72,6 +74,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .data(pool.clone())
             .route("/auth", web::post().to(handlers::auth_user))
+            .route("/refresh", web::post().to(handlers::refresh_user))
             .route("/users", web::post().to(handlers::add_user))
             .service(
                 web::scope("/api")
