@@ -1,5 +1,6 @@
-use super::models::{NewUser, User};
+use super::models::{NewUser, User, NewAccessToken, AccessToken};
 use super::schema::users::dsl::*;
+use super::schema::access_tokens::dsl::{access_tokens};
 use super::Pool;
 
 use crate::diesel::ExpressionMethods;
@@ -9,6 +10,7 @@ use crate::diesel::QueryDsl;
 use actix_web::{web, Error, HttpResponse};
 use diesel::dsl::{insert_into, exists, select};
 use serde::{Deserialize, Serialize};
+use nanoid::nanoid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputUser {
@@ -54,11 +56,44 @@ fn add_single_user(
         created_at: chrono::Local::now().naive_local(),
     };
     let item_exist: std::result::Result<bool, diesel::result::Error> = select(exists(users.filter(email.eq(&item.email)))).get_result(&conn);
-    if Ok(true) == item_exist {
+    if item_exist.is_err() || item_exist.unwrap() {
         // TODO Create a custom error
         Err(diesel::result::Error::NotFound)
     } else {
         let res = insert_into(users).values(&new_user).get_result(&conn)?;
         Ok(res)
+    }
+}
+
+pub async fn auth_user(
+    db: web::Data<Pool>,
+    item: web::Json<InputUser>,
+) -> Result<HttpResponse, Error> {
+    Ok(web::block(move || auth_single_user(db, item))
+        .await
+        .map(|access| HttpResponse::Created().json(access))
+        .map_err(|_| HttpResponse::Unauthorized())?)
+}
+
+fn auth_single_user(
+    db: web::Data<Pool>,
+    item: web::Json<InputUser>,
+) -> Result<AccessToken, diesel::result::Error> {
+    let conn = db.get().unwrap();
+    let user_id = users.filter(email.eq(&item.email)).select(id).first(&conn);  
+    if user_id.is_ok() {
+        // TODO Check if an already existing token is present for that user
+        // If we return that one
+        // Else return a new one
+        let new_access_token = NewAccessToken {
+            user_id: user_id.unwrap(),
+            access_token: nanoid!(64),
+            refresh_token: nanoid!(64),
+            created_at: chrono::Local::now().naive_local(),
+        };
+        let res = insert_into(access_tokens).values(&new_access_token).get_result(&conn)?;
+        Ok(res)
+    } else {
+        Err(diesel::result::Error::NotFound)
     }
 }

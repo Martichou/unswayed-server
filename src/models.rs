@@ -23,30 +23,16 @@ pub struct NewUser<'a> {
 pub struct AccessToken {
     pub id: i32,
 	pub user_id: i32,
-	pub access_token: String,
+    pub access_token: String,
+    pub refresh_token: String,
     pub created_at: chrono::NaiveDateTime,
 }
 
 #[derive(Insertable, Debug)]
 #[table_name = "access_tokens"]
-pub struct NewAccessToken<'a> {
-	pub user_id: &'a i32,
-    pub access_token: &'a str,
-    pub created_at: chrono::NaiveDateTime,
-}
-
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
-pub struct RefreshToken {
-    pub id: i32,
+pub struct NewAccessToken {
 	pub user_id: i32,
-	pub refresh_token: String,
-    pub created_at: chrono::NaiveDateTime,
-}
-
-#[derive(Insertable, Debug)]
-#[table_name = "refresh_tokens"]
-pub struct NewRefreshToken<'a> {
-	pub user_id: &'a i32,
-    pub refresh_token: &'a str,
+    pub access_token: std::string::String,
+    pub refresh_token: std::string::String,
     pub created_at: chrono::NaiveDateTime,
 }

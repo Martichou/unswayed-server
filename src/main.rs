@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate diesel;
+extern crate nanoid;
 
 use actix_web::{web, App, HttpServer};
 use diesel::prelude::*;
@@ -25,6 +26,7 @@ async fn main() -> std::io::Result<()> {
             .data(pool.clone())
             .route("/users", web::get().to(handlers::get_users))
             .route("/users", web::post().to(handlers::add_user))
+            .route("/auth", web::post().to(handlers::auth_user))
     })
     .bind("127.0.0.1:8080")?
     .run()
