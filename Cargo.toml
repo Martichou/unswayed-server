@@ -13,6 +13,7 @@ actix-multipart = "0.2.0"
 actix-web-httpauth = "0.4.1"
 diesel = { version = "1.4.4", features = ["postgres", "r2d2", "chrono"] }
 chrono = { version = "0.4.11", features = ["serde"] }
+bytes = { version = "0.5", features = ["serde"] }
 sanitize-filename = "0.2"
 derive_more = "0.99.7"
 serde_derive = "1.0"
@@ -23,3 +24,5 @@ nanoid = "0.3.0"
 r2d2 = "0.8.8"
 serde = "1.0"
 async-std = "1.6.0"
+rusoto_s3 = "0.44.0"
+rusoto_core = "0.44.0"

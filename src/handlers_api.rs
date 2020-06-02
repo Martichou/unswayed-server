@@ -5,11 +5,11 @@ use super::Pool;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
+use crate::utils::upload::*;
 
 use actix_web::{web, Error, HttpResponse, HttpRequest};
-use futures::{StreamExt, TryStreamExt};
 use actix_multipart::Multipart;
-use async_std::prelude::*;
+use std::borrow::BorrowMut;
 
 fn get_user_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
     req.headers().get("user_id")?.to_str().ok()
@@ -36,17 +36,12 @@ fn get_me_info(
 }
 
 pub async fn upload_one(
-	mut payload: Multipart
+    req: HttpRequest,
+    mut payload: Multipart
 ) -> Result<HttpResponse, Error> {
-    while let Ok(Some(mut field)) = payload.try_next().await {
-		let content_type = field.content_disposition().ok_or_else(|| actix_web::error::ParseError::Incomplete)?;
-        let filename = content_type.get_filename().ok_or_else(|| actix_web::error::ParseError::Incomplete)?;
-        let filepath = format!("./images/{}", sanitize_filename::sanitize(&filename));
-        let mut f = async_std::fs::File::create(filepath).await?;
-        while let Some(chunk) = field.next().await {
-            let data = chunk.unwrap();
-            f.write_all(&data).await?;
-        }
-    }
-    Ok(HttpResponse::Ok().into())
+    let user_id_f = get_user_id(&req).unwrap();
+    let pl = split_payload(payload.borrow_mut()).await;
+    let s3_upload_key = format!("users/{}/", user_id_f);
+    let callback = save_file(pl.1, s3_upload_key).await.unwrap();
+    Ok(HttpResponse::Ok().json(callback))
 }
