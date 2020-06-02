@@ -1,6 +1,6 @@
+use super::s3_utils::upload::{split_payload, save_file};
 use super::schema::users::dsl::*;
 use super::models::User;
-use super::upload;
 use super::Pool;
 
 use crate::diesel::ExpressionMethods;
@@ -41,7 +41,7 @@ pub async fn upload_one(
     db: web::Data<Pool>
 ) -> Result<HttpResponse, Error> {
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>().unwrap();
-    let pl = upload::split_payload(user_id_f, &db, payload.borrow_mut()).await;
-    let callback = upload::save_file(user_id_f, &db, pl).await.unwrap();
+    let pl = split_payload(user_id_f, &db, payload.borrow_mut()).await;
+    let callback = save_file(user_id_f, &db, pl).await.unwrap();
     Ok(HttpResponse::Ok().json(callback))
 }

@@ -1,10 +1,10 @@
 use crate::diesel::BoolExpressionMethods;
 use crate::diesel::ExpressionMethods;
+use crate::schema::images::dsl::*;
 use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
+use crate::models::NewImage;
 
-use super::models::NewImage;
-use super::schema::images::dsl::*;
 use super::s3;
 
 use diesel::dsl::{insert_into, exists, select};

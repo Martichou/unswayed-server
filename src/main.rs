@@ -4,18 +4,17 @@ extern crate diesel;
 use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
 use diesel::r2d2::ConnectionManager;
 use schema::access_tokens::dsl::*;
-use errors::ServiceError;
+use utils::errors::ServiceError;
 use diesel::prelude::*;
 use std::str::FromStr;
 use chrono::Duration;
 
 mod handlers_api;
 mod handlers;
-mod errors;
+mod s3_utils;
 mod models;
 mod schema;
-mod upload;
-mod s3;
+mod utils;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
