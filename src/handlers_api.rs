@@ -1,11 +1,11 @@
-use super::models::User;
 use super::schema::users::dsl::*;
+use super::models::User;
+use super::upload;
 use super::Pool;
 
 use crate::diesel::ExpressionMethods;
 use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
-use crate::utils::upload::*;
 
 use actix_web::{web, Error, HttpResponse, HttpRequest};
 use actix_multipart::Multipart;
@@ -37,11 +37,11 @@ fn get_me_info(
 
 pub async fn upload_one(
     req: HttpRequest,
-    mut payload: Multipart
+    mut payload: Multipart,
+    db: web::Data<Pool>
 ) -> Result<HttpResponse, Error> {
-    let user_id_f = get_user_id(&req).unwrap();
-    let pl = split_payload(payload.borrow_mut()).await;
-    let s3_upload_key = format!("users/{}/", user_id_f);
-    let callback = save_file(pl.1, s3_upload_key).await.unwrap();
+    let user_id_f = get_user_id(&req).unwrap().parse::<i32>().unwrap();
+    let pl = upload::split_payload(user_id_f, &db, payload.borrow_mut()).await;
+    let callback = upload::save_file(user_id_f, &db, pl).await.unwrap();
     Ok(HttpResponse::Ok().json(callback))
 }

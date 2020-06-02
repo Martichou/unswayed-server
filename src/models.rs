@@ -36,3 +36,21 @@ pub struct NewAccessToken {
     pub refresh_token: std::string::String,
     pub created_at: chrono::NaiveDateTime,
 }
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+pub struct Image {
+    pub id: i32,
+	pub user_id: i32,
+    pub realname: std::string::String,
+    pub fakedname: std::string::String,
+    pub created_at: chrono::NaiveDateTime,
+}
+
+#[derive(Insertable, Debug)]
+#[table_name = "images"]
+pub struct NewImage {
+	pub user_id: i32,
+    pub realname: std::string::String,
+    pub fakedname: std::string::String,
+    pub created_at: chrono::NaiveDateTime,
+}

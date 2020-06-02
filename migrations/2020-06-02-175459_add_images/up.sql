@@ -1,0 +1,7 @@
+CREATE TABLE images (
+	id SERIAL NOT NULL PRIMARY KEY,
+	user_id INT NOT NULL,
+	realname TEXT NOT NULL,
+	fakedname VARCHAR(128) NOT NULL,
+	created_at TIMESTAMP NOT NULL
+);

@@ -1,11 +1,10 @@
 #[macro_use]
 extern crate diesel;
 
-use errors::ServiceError;
-use schema::access_tokens::dsl::*;
-
 use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
 use diesel::r2d2::ConnectionManager;
+use schema::access_tokens::dsl::*;
+use errors::ServiceError;
 use diesel::prelude::*;
 use std::str::FromStr;
 use chrono::Duration;
@@ -15,7 +14,8 @@ mod handlers;
 mod errors;
 mod models;
 mod schema;
-mod utils;
+mod upload;
+mod s3;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -69,7 +69,7 @@ async fn main() -> std::io::Result<()> {
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool: Pool = r2d2::Pool::builder().build(manager).expect("Failed to create pool.");
 
-    std::fs::create_dir_all("./images").unwrap();
+    std::fs::create_dir_all("./tmp").unwrap();
 
     HttpServer::new(move || {
         let auth = HttpAuthentication::bearer(validator);

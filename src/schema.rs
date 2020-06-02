@@ -9,6 +9,16 @@ table! {
 }
 
 table! {
+    images (id) {
+        id -> Int4,
+        user_id -> Int4,
+        realname -> Text,
+        fakedname -> Varchar,
+        created_at -> Timestamp,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         email -> Text,
@@ -19,5 +29,6 @@ table! {
 
 allow_tables_to_appear_in_same_query!(
     access_tokens,
+    images,
     users,
 );

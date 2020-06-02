@@ -1,14 +1,14 @@
 use super::models::{NewUser, User, NewAccessToken, AccessToken};
-use super::schema::users::dsl::*;
 use super::schema::access_tokens::dsl::*;
+use super::schema::users::dsl::*;
 use super::Pool;
 
 use crate::diesel::ExpressionMethods;
 use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
 
-use actix_web::{web, Error, HttpResponse};
 use diesel::dsl::{insert_into, exists, select};
+use actix_web::{web, Error, HttpResponse};
 use serde::{Deserialize, Serialize};
 use nanoid::nanoid;
 

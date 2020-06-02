@@ -521,9 +521,6 @@ name = "bytes"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "130aac562c0dd69c56b3b1cc8ffd2e17be31d0b6c25b61c96b76231aa23e39e1"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "bytestring"
@@ -2561,7 +2558,6 @@ dependencies = [
  "actix-web",
  "actix-web-httpauth",
  "async-std",
- "bytes",
  "chrono",
  "derive_more",
  "diesel",
