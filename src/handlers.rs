@@ -7,7 +7,7 @@ use crate::diesel::ExpressionMethods;
 use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
 
-use actix_web::{web, Error, HttpRequest, HttpResponse};
+use actix_web::{web, Error, HttpResponse};
 use diesel::dsl::{insert_into, exists, select};
 use serde::{Deserialize, Serialize};
 use nanoid::nanoid;
@@ -21,30 +21,6 @@ pub struct InputUser {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputRefreshToken {
     pub refresh_token: String,
-}
-
-fn get_user_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
-    req.headers().get("user_id")?.to_str().ok()
-}
-
-pub async fn get_me(
-    req: HttpRequest,
-    db: web::Data<Pool>
-) -> Result<HttpResponse, Error> {
-    let user_id_f = get_user_id(&req).unwrap().parse::<i32>().unwrap();
-    Ok(web::block(move || get_me_info(user_id_f, db))
-        .await
-        .map(|user| HttpResponse::Ok().json(user))
-        .map_err(|_| HttpResponse::InternalServerError())?)
-}
-
-fn get_me_info(
-    user_id_f: i32,
-    pool: web::Data<Pool>
-) -> Result<User, diesel::result::Error> {
-    let conn = pool.get().unwrap();
-    let user = users.filter(super::schema::users::dsl::id.eq(&user_id_f)).first::<User>(&conn)?;
-    Ok(user)
 }
 
 pub async fn add_user(
@@ -71,7 +47,6 @@ fn add_single_user(
     if item_exist.is_err() {
         Err(item_exist.unwrap_err())
     } else if item_exist.unwrap() {
-        // TODO Create a custom error User already exist
         Err(diesel::result::Error::NotFound)
     } else {
         Ok(insert_into(users).values(&new_user).get_result(&conn)?)

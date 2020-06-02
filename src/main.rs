@@ -1,15 +1,16 @@
 #[macro_use]
 extern crate diesel;
 
-use crate::errors::ServiceError;
+use errors::ServiceError;
 use schema::access_tokens::dsl::*;
 
 use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
+use diesel::r2d2::ConnectionManager;
 use diesel::prelude::*;
-use diesel::r2d2::{self, ConnectionManager};
 use std::str::FromStr;
-use chrono::{Duration};
+use chrono::Duration;
 
+mod handlers_api;
 mod handlers;
 mod errors;
 mod models;
@@ -67,6 +68,8 @@ async fn main() -> std::io::Result<()> {
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool: Pool = r2d2::Pool::builder().build(manager).expect("Failed to create pool.");
 
+    std::fs::create_dir_all("./images").unwrap();
+
     HttpServer::new(move || {
         let auth = HttpAuthentication::bearer(validator);
         App::new()
@@ -77,7 +80,8 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .wrap(auth)
-                    .route("/me", web::get().to(handlers::get_me))
+                    .route("/me", web::get().to(handlers_api::get_me))
+                    .route("/upload", web::post().to(handlers_api::upload_one))
             )
     })
     .bind("127.0.0.1:8080")?
