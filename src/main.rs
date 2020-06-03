@@ -64,6 +64,7 @@ async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     std::env::set_var("RUST_LOG", "actix_web=debug");
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let binding = std::env::var("BINDING").expect("BINDING must be set");
 
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool: Pool = r2d2::Pool::builder().build(manager).expect("Failed to create pool.");
@@ -90,7 +91,7 @@ async fn main() -> std::io::Result<()> {
                     )
             )
     })
-    .bind("127.0.0.1:8080")?
+    .bind(binding)?
     .run()
     .await
 }
