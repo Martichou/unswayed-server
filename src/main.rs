@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate diesel;
 
-use actix_web::{client::Client, dev::ServiceRequest, web, App, Error, http::header, HttpServer};
+use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
 use diesel::r2d2::ConnectionManager;
 use schema::access_tokens::dsl::*;
 use utils::errors::ServiceError;
@@ -69,8 +69,6 @@ async fn main() -> std::io::Result<()> {
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool: Pool = r2d2::Pool::builder().build(manager).expect("Failed to create pool.");
 
-    std::fs::create_dir_all("./tmp").unwrap();
-
     HttpServer::new(move || {
         let auth = HttpAuthentication::bearer(validator);
         App::new()
@@ -86,7 +84,6 @@ async fn main() -> std::io::Result<()> {
                     .route("/lists", web::get().to(handlers_api::get_list))
                     .service(
                         web::scope("/get")
-                            .data(Client::new())
                             .route("{filename}", web::get().to(handlers_api::get_one))
                     )
             )

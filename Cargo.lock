@@ -2575,6 +2575,7 @@ dependencies = [
  "actix-web",
  "actix-web-httpauth",
  "async-std",
+ "bytes",
  "chrono",
  "derive_more",
  "diesel",
@@ -2589,6 +2590,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
