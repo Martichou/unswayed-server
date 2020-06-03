@@ -82,6 +82,8 @@ async fn main() -> std::io::Result<()> {
                     .wrap(auth)
                     .route("/me", web::get().to(handlers_api::get_me))
                     .route("/upload", web::post().to(handlers_api::upload_one))
+                    .route("/lists", web::get().to(handlers_api::get_list))
+                    .route("/get/{filename}", web::get().to(handlers_api::get_one))
             )
     })
     .bind("127.0.0.1:8080")?
