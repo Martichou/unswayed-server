@@ -82,11 +82,6 @@ pub async fn get_one(
         let mut forwarded_req = client.request_from(url, req.head());
         // Modify header for the S3 restriction
         forwarded_req.headers_mut().clear();
-        let forwarded_req = if let Some(addr) = req.head().peer_addr {
-            forwarded_req.header("x-forwarded-for", format!("{}", addr.ip()))
-        } else {
-            forwarded_req
-        };
         let mut res = forwarded_req.send_body(body).await.map_err(Error::from)?;
         let mut client_resp = HttpResponse::build(res.status());
         for (header_name, header_value) in res.headers().iter().filter(|(h, _)| *h != "connection") {
