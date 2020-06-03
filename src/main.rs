@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate diesel;
 
-use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
+use actix_web::{client::Client, dev::ServiceRequest, web, App, Error, http::header, HttpServer};
 use diesel::r2d2::ConnectionManager;
 use schema::access_tokens::dsl::*;
 use utils::errors::ServiceError;
@@ -83,7 +83,11 @@ async fn main() -> std::io::Result<()> {
                     .route("/me", web::get().to(handlers_api::get_me))
                     .route("/upload", web::post().to(handlers_api::upload_one))
                     .route("/lists", web::get().to(handlers_api::get_list))
-                    .route("/get/{filename}", web::get().to(handlers_api::get_one))
+                    .service(
+                        web::scope("/get")
+                            .data(Client::new())
+                            .route("{filename}", web::get().to(handlers_api::get_one))
+                    )
             )
     })
     .bind("127.0.0.1:8080")?

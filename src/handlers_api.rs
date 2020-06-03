@@ -10,7 +10,7 @@ use crate::diesel::ExpressionMethods;
 use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
 
-use actix_web::{web, Error, HttpResponse, HttpRequest};
+use actix_web::{client::Client, web, Error, HttpResponse, HttpRequest, http::StatusCode};
 use actix_multipart::Multipart;
 use std::borrow::BorrowMut;
 
@@ -69,15 +69,31 @@ fn get_me_list(
 
 pub async fn get_one(
     req: HttpRequest,
+    body: web::Bytes,
     db: web::Data<Pool>,
-) -> Result<U> {
+    client: web::Data<Client>
+) -> Result<HttpResponse, Error> {
     let conn = db.get().unwrap();
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>().unwrap();
     let filename = sanitize_filename::sanitize(req.match_info().query("filename"));
     let item_f = images.filter(realname.eq(&filename).and(user_id.eq(user_id_f))).select(fakedname).first::<String>(&conn);
     if item_f.is_ok() {
-        // Success return the image
+        let url = format!("https://unswayed.eu-central-1.linodeobjects.com/{}", item_f.unwrap());
+        let mut forwarded_req = client.request_from(url, req.head());
+        // Modify header for the S3 restriction
+        forwarded_req.headers_mut().clear();
+        let forwarded_req = if let Some(addr) = req.head().peer_addr {
+            forwarded_req.header("x-forwarded-for", format!("{}", addr.ip()))
+        } else {
+            forwarded_req
+        };
+        let mut res = forwarded_req.send_body(body).await.map_err(Error::from)?;
+        let mut client_resp = HttpResponse::build(res.status());
+        for (header_name, header_value) in res.headers().iter().filter(|(h, _)| *h != "connection") {
+            client_resp.header(header_name.clone(), header_value.clone());
+        }
+        Ok(client_resp.body(res.body().await?))
     } else {
-        // Error
+        Ok(HttpResponse::new(StatusCode::UNAUTHORIZED))
     }
 }

@@ -1,0 +1,17 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [{
+		"Effect": "Allow",
+		"Principal": "*",
+		"Action": "s3:*",
+		"Resource": "arn:aws:s3:::unswayed/*",
+		"Condition": {
+			"IpAddress": {
+        		"aws:SourceIp": [
+            		"172.104.249.116",
+            		"2a02:a03f:5acd:3400:9472:7734:282a:255a"
+				]
+			}
+		}
+	}]
+}
