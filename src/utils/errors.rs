@@ -1,28 +1,7 @@
 use actix_web::{error::ResponseError, HttpResponse, http::StatusCode};
-use derive_more::Display;
 use actix_threadpool;
 use serde::Serialize;
 use std::fmt;
-
-#[derive(Debug, Display)]
-pub enum ServiceError {
-    #[display(fmt = "Internal Server Error")]
-	InternalServerError,
-    #[display(fmt = "BadRequest: {}", _0)]
-	BadRequest(String),
-	#[display(fmt = "Invalid Token")]
-	InvalidToken,
-}
-
-impl ResponseError for ServiceError {
-    fn error_response(&self) -> HttpResponse {
-        match self {
-            ServiceError::InternalServerError => HttpResponse::InternalServerError().json("Internal Server Error, Please try later"),
-			ServiceError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
-			ServiceError::InvalidToken => HttpResponse::BadRequest().json("invalid token: you token is either invalid or it has been expired"),
-        }
-    }
-}
 
 #[derive(Debug)]
 pub enum AppErrorType {
@@ -30,6 +9,7 @@ pub enum AppErrorType {
     DbError,
     PoolError,
     KeyAlreadyExists,
+    InvalidToken,
 }
 
 #[derive(Debug)]
@@ -61,6 +41,11 @@ impl AppError {
                 error_type: AppErrorType::PoolError,
                 ..
             } => "Cannot get the connection pool to the database".to_string(),
+            AppError {
+                message: None,
+                error_type: AppErrorType::InvalidToken,
+                ..
+            } => "The token is invalid or has been expired".to_string(),
             _ => "An unexpected error has occurred".to_string(),
         }
     }
@@ -81,6 +66,7 @@ impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match self.error_type {
             AppErrorType::KeyAlreadyExists => StatusCode::CONFLICT,
+            AppErrorType::InvalidToken => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR
         }
     }

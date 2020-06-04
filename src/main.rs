@@ -2,9 +2,9 @@
 extern crate diesel;
 
 use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
+use utils::errors::{AppError, AppErrorType};
 use diesel::r2d2::ConnectionManager;
 use schema::access_tokens::dsl::*;
-use utils::errors::ServiceError;
 use diesel::prelude::*;
 use std::str::FromStr;
 use chrono::Duration;
@@ -22,18 +22,14 @@ use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
 use actix_web_httpauth::extractors::AuthenticationError;
 use actix_web_httpauth::middleware::HttpAuthentication;
 
-pub fn validate_token(token: &str, pool: web::Data<Pool>) -> Result<(bool, std::string::String), ServiceError> {
-    let conn = pool.get().unwrap();
-    let access_token_f = access_tokens.filter(access_token.eq(token)).select((user_id, created_at)).first::<(i32, chrono::NaiveDateTime)>(&conn);
-    if access_token_f.is_ok() {
-        let data = access_token_f.unwrap();
-        if chrono::Local::now().naive_local() - Duration::hours(2) < data.1 {
-            Ok((true, String::from(data.0.to_string())))
-        } else {
-            Err(ServiceError::InvalidToken)
-        }
+pub fn validate_token(token: &str, pool: web::Data<Pool>) -> Result<(bool, std::string::String), AppError> {
+    let conn = pool.get()?;
+    let access_token_f = access_tokens.filter(access_token.eq(token)).select((user_id, created_at)).first::<(i32, chrono::NaiveDateTime)>(&conn)?;
+    let data = access_token_f;
+    if chrono::Local::now().naive_local() - Duration::hours(2) < data.1 {
+        Ok((true, String::from(data.0.to_string())))
     } else {
-        Err(ServiceError::InvalidToken)
+        Err(AppError { message: None, cause: None, error_type: AppErrorType::InvalidToken })
     }
 }
 
@@ -65,6 +61,11 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=debug");
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let binding = std::env::var("BINDING").expect("BINDING must be set");
+    // Checking if envs are set correctly
+    std::env::var("AWS_ACCESS_KEY_ID").expect("AWS_ACCESS_KEY_ID must be set");
+    std::env::var("AWS_SECRET_ACCESS_KEY").expect("AWS_SECRET_ACCESS_KEY must be set");
+    std::env::var("AWS_S3_BUCKET_NAME").expect("AWS_S3_BUCKET_NAME must be set");
+    std::env::var("AWS_REGION").expect("BINDAWS_REGIONING must be set");
 
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool: Pool = r2d2::Pool::builder().build(manager).expect("Failed to create pool.");
