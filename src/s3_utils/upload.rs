@@ -22,6 +22,7 @@ type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UploadFile {
+    pub realname: String,
     pub filename: String,
     pub url: String,
 }
@@ -29,6 +30,7 @@ pub struct UploadFile {
 impl From<Tmpfile> for UploadFile {
     fn from(tmp_file: Tmpfile) -> Self {
         UploadFile {
+            realname: tmp_file.realname,
             filename: tmp_file.name,
             url: tmp_file.s3_url,
         }
