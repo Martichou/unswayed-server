@@ -1,7 +1,17 @@
 #[macro_use]
 extern crate diesel;
 
+mod routes_auth;
+mod routes_api;
+mod s3_utils;
+mod models;
+mod schema;
+mod utils;
+
 use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
+use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
+use actix_web_httpauth::extractors::AuthenticationError;
+use actix_web_httpauth::middleware::HttpAuthentication;
 use utils::errors::{AppError, AppErrorType};
 use diesel::r2d2::ConnectionManager;
 use schema::access_tokens::dsl::*;
@@ -9,18 +19,7 @@ use diesel::prelude::*;
 use std::str::FromStr;
 use chrono::Duration;
 
-mod handlers_api;
-mod handlers;
-mod s3_utils;
-mod models;
-mod schema;
-mod utils;
-
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
-
-use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
-use actix_web_httpauth::extractors::AuthenticationError;
-use actix_web_httpauth::middleware::HttpAuthentication;
 
 pub fn validate_token(token: &str, pool: web::Data<Pool>) -> Result<(bool, std::string::String), AppError> {
     let conn = pool.get()?;
@@ -73,18 +72,18 @@ async fn main() -> std::io::Result<()> {
         let auth = HttpAuthentication::bearer(validator);
         App::new()
             .data(pool.clone())
-            .route("/auth", web::post().to(handlers::auth_user))
-            .route("/refresh", web::post().to(handlers::refresh_user))
-            .route("/users", web::post().to(handlers::add_user))
+            .route("/auth", web::post().to(routes_auth::auth_user))
+            .route("/refresh", web::post().to(routes_auth::refresh_user))
+            .route("/users", web::post().to(routes_auth::add_user))
             .service(
                 web::scope("/api")
                     .wrap(auth)
-                    .route("/me", web::get().to(handlers_api::get_me))
-                    .route("/upload", web::post().to(handlers_api::upload_one))
-                    .route("/lists", web::get().to(handlers_api::get_list))
+                    .route("/me", web::get().to(routes_api::get_me))
+                    .route("/upload", web::post().to(routes_api::upload_one))
+                    .route("/lists", web::get().to(routes_api::get_list))
                     .service(
                         web::scope("/get")
-                            .route("{filename}", web::get().to(handlers_api::get_one))
+                            .route("{filename}", web::get().to(routes_api::get_one))
                     )
             )
     })
