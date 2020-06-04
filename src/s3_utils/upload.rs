@@ -5,7 +5,7 @@ use crate::diesel::RunQueryDsl;
 use crate::models::NewImage;
 use crate::schema::images::dsl::*;
 
-use super::s3;
+use super::s3client::Client;
 
 use actix_multipart::{Field, Multipart};
 use actix_web::{web, Error};
@@ -62,7 +62,7 @@ impl Tmpfile {
 
     async fn s3_upload(&mut self) {
         let path = format!("{}", &self.name);
-        let url: String = s3::Client::new()
+        let url: String = Client::new()
             .put_object(&self.tmp_path, &path.clone())
             .await;
         self.s3_url = url;
@@ -151,6 +151,6 @@ pub async fn save_file(
 #[allow(unused)]
 pub async fn delete_object(list: Vec<String>) {
     for key in list {
-        s3::Client::new().delete_object(key).await;
+        Client::new().delete_object(key).await;
     }
 }
