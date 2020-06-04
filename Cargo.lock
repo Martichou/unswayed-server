@@ -2380,6 +2380,7 @@ dependencies = [
  "nanoid",
  "openssl",
  "r2d2",
+ "regex",
  "rusoto_core",
  "rusoto_s3",
  "sanitize-filename",

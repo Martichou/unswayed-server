@@ -14,6 +14,7 @@ use diesel::dsl::{insert_into, exists, select};
 use serde::{Deserialize, Serialize};
 use actix_web::{web, HttpResponse};
 use nanoid::nanoid;
+use regex::Regex;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputUser {
@@ -24,6 +25,11 @@ pub struct InputUser {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputRefreshToken {
     pub refresh_token: String,
+}
+
+fn email_valid(input_email: &str) -> bool {
+    let email_regex = Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})").expect("Email regex is invalid !");
+    email_regex.is_match(input_email)
 }
 
 pub async fn add_user(
@@ -39,6 +45,9 @@ fn add_single_user(
     item: web::Json<InputUser>,
 ) -> Result<User, AppError> {
     let conn = db.get()?;
+    if !email_valid(&item.email) {
+        return Err(AppError { message: Some("The provided email is not correctly formatted".to_string()), cause: None, error_type: AppErrorType::InvalidRequest });
+    }
     let new_user = NewUser { email: &item.email, passwd: &item.passwd, created_at: chrono::Local::now().naive_local() };
     let item_exist = select(exists(users.filter(email.eq(&item.email)))).get_result(&conn)?;
     if item_exist {
@@ -61,6 +70,9 @@ fn auth_single_user(
     item: web::Json<InputUser>,
 ) -> Result<AccessToken, AppError> {
     let conn = db.get()?;
+    if !email_valid(&item.email) {
+        return Err(AppError { message: Some("The provided email is not correctly formatted".to_string()), cause: None, error_type: AppErrorType::InvalidRequest });
+    }
     let user_id_f = users.filter(email.eq(&item.email).and(passwd.eq(&item.passwd))).select(super::schema::users::dsl::id).first(&conn);
     if user_id_f.is_ok() {
         let new_access_token = NewAccessToken {
