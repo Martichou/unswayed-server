@@ -8,8 +8,10 @@ pub enum AppErrorType {
     RusotoError,
     DbError,
     PoolError,
+    InvalidCrendetials,
     KeyAlreadyExists,
     InvalidToken,
+    InvalidRequest
 }
 
 #[derive(Debug)]
@@ -46,6 +48,16 @@ impl AppError {
                 error_type: AppErrorType::InvalidToken,
                 ..
             } => "The token is invalid or has been expired".to_string(),
+            AppError {
+                message: None,
+                error_type: AppErrorType::InvalidCrendetials,
+                ..
+            } => "Your email was entered incorrectly, or your password was incorrect".to_string(),
+            AppError {
+                message: None,
+                error_type: AppErrorType::InvalidRequest,
+                ..
+            } => "Invalid request".to_string(),
             _ => "An unexpected error has occurred".to_string(),
         }
     }
@@ -66,7 +78,9 @@ impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match self.error_type {
             AppErrorType::KeyAlreadyExists => StatusCode::CONFLICT,
-            AppErrorType::InvalidToken => StatusCode::BAD_REQUEST,
+            AppErrorType::InvalidToken => StatusCode::UNAUTHORIZED,
+            AppErrorType::InvalidCrendetials => StatusCode::UNAUTHORIZED,
+            AppErrorType::InvalidRequest => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR
         }
     }

@@ -3,15 +3,16 @@ use super::schema::access_tokens::dsl::*;
 use super::schema::users::dsl::*;
 use super::Pool;
 
+use crate::diesel::BoolExpressionMethods;
+use crate::utils::errors::AppErrorType;
 use crate::diesel::ExpressionMethods;
+use crate::utils::errors::AppError;
 use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
-use crate::utils::errors::AppErrorType;
-use crate::utils::errors::AppError;
 
 use diesel::dsl::{insert_into, exists, select};
-use actix_web::{web, HttpResponse};
 use serde::{Deserialize, Serialize};
+use actix_web::{web, HttpResponse};
 use nanoid::nanoid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,11 +39,7 @@ fn add_single_user(
     item: web::Json<InputUser>,
 ) -> Result<User, AppError> {
     let conn = db.get()?;
-    let new_user = NewUser {
-        email: &item.email,
-        passwd: &item.passwd,
-        created_at: chrono::Local::now().naive_local()
-    };
+    let new_user = NewUser { email: &item.email, passwd: &item.passwd, created_at: chrono::Local::now().naive_local() };
     let item_exist = select(exists(users.filter(email.eq(&item.email)))).get_result(&conn)?;
     if item_exist {
         Err(AppError { message: None, cause: None, error_type: AppErrorType::KeyAlreadyExists })
@@ -64,14 +61,18 @@ fn auth_single_user(
     item: web::Json<InputUser>,
 ) -> Result<AccessToken, AppError> {
     let conn = db.get()?;
-    let user_id_f = users.filter(email.eq(&item.email)).select(super::schema::users::dsl::id).first(&conn)?;
-    let new_access_token = NewAccessToken {
-        user_id: user_id_f,
-        access_token: nanoid!(64),
-        refresh_token: nanoid!(64),
-        created_at: chrono::Local::now().naive_local(),
-    };
-    Ok(insert_into(access_tokens).values(&new_access_token).get_result(&conn)?)
+    let user_id_f = users.filter(email.eq(&item.email).and(passwd.eq(&item.passwd))).select(super::schema::users::dsl::id).first(&conn);
+    if user_id_f.is_ok() {
+        let new_access_token = NewAccessToken {
+            user_id: user_id_f.unwrap(),
+            access_token: nanoid!(64),
+            refresh_token: nanoid!(64),
+            created_at: chrono::Local::now().naive_local(),
+        };
+        Ok(insert_into(access_tokens).values(&new_access_token).get_result(&conn)?)
+    } else {
+        Err(AppError { message: None, cause: None, error_type: AppErrorType::InvalidCrendetials })
+    }
 }
 
 pub async fn refresh_user(
@@ -87,13 +88,17 @@ fn auth_refresh_token(
     item: web::Json<InputRefreshToken>,
 ) -> Result<AccessToken, AppError> {
     let conn = db.get()?;
-    let access_tokens_f = access_tokens.filter(refresh_token.eq(&item.refresh_token)).select(user_id).first(&conn)?;
-    let new_access_token = NewAccessToken {
-        user_id: access_tokens_f,
-        access_token: nanoid!(64),
-        refresh_token: nanoid!(64),
-        created_at: chrono::Local::now().naive_local(),
-    };
-    diesel::delete(access_tokens.filter(refresh_token.eq(&item.refresh_token))).execute(&conn)?;
-    Ok(insert_into(access_tokens).values(&new_access_token).get_result(&conn)?)
+    let access_tokens_f = access_tokens.filter(refresh_token.eq(&item.refresh_token)).select(user_id).first(&conn);
+    if access_tokens_f.is_ok() {
+        let new_access_token = NewAccessToken {
+            user_id: access_tokens_f.unwrap(),
+            access_token: nanoid!(64),
+            refresh_token: nanoid!(64),
+            created_at: chrono::Local::now().naive_local(),
+        };
+        diesel::delete(access_tokens.filter(refresh_token.eq(&item.refresh_token))).execute(&conn)?;
+        Ok(insert_into(access_tokens).values(&new_access_token).get_result(&conn)?)
+    } else {
+        Err(AppError { message: None, cause: None, error_type: AppErrorType::InvalidToken })
+    }
 }

@@ -23,9 +23,14 @@ pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 pub fn validate_token(token: &str, pool: web::Data<Pool>) -> Result<(bool, std::string::String), AppError> {
     let conn = pool.get()?;
-    let access_token_f = access_tokens.filter(access_token.eq(token)).select((user_id, created_at)).first::<(i32, chrono::NaiveDateTime)>(&conn)?;
-    if chrono::Local::now().naive_local() - Duration::hours(2) < access_token_f.1 {
-        Ok((true, String::from(access_token_f.0.to_string())))
+    let access_token_f = access_tokens.filter(access_token.eq(token)).select((user_id, created_at)).first::<(i32, chrono::NaiveDateTime)>(&conn);
+    if access_token_f.is_ok() {
+        let access_token_f = access_token_f.unwrap();
+        if chrono::Local::now().naive_local() - Duration::hours(2) < access_token_f.1 {
+            Ok((true, String::from(access_token_f.0.to_string())))
+        } else {
+            Err(AppError { message: None, cause: None, error_type: AppErrorType::InvalidToken })
+        }
     } else {
         Err(AppError { message: None, cause: None, error_type: AppErrorType::InvalidToken })
     }
