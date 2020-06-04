@@ -85,7 +85,7 @@ async fn main() -> std::io::Result<()> {
                     .wrap(auth)
                     .route("/me", web::get().to(routes_api::get_me))
                     .route("/upload", web::post().to(routes_api::upload_one))
-                    .route("/lists", web::get().to(routes_api::get_list))
+                    .route("/mine", web::get().to(routes_api::get_mine))
                     .service(
                         web::scope("/get")
                             .route("{filename}", web::get().to(routes_api::get_one))

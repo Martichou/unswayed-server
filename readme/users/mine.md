@@ -1,8 +1,8 @@
-# Lists
+# Mine
 
 Used to get alls images informations uploaded by the users.
 
-**URL** : `/api/lists`
+**URL** : `/api/mine`
 
 **Method** : `GET`
 

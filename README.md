@@ -24,7 +24,7 @@ Each endpoint manipulates or displays information related to the User whose
 Token is provided with the request:
 
 * [Me](readme/users/me.md) : `GET /api/me`
-* [List Images](readme/users/lists.md) : `GET /api/lists`
+* [List Images](readme/users/mine.md) : `GET /api/mine`
 * [Upload Images](readme/users/upload.md) : `POST /api/upload`
 * [Get Image](readme/users/get.md) : `GET /api/get/{filename}`
 

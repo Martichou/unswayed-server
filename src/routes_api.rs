@@ -49,16 +49,16 @@ pub async fn upload_one(
     Ok(HttpResponse::Ok().json(save_file(user_id_f, &db, pl).await.unwrap()))
 }
 
-pub async fn get_list(
+pub async fn get_mine(
     req: HttpRequest,
     db: web::Data<Pool>,
 ) -> Result<HttpResponse, AppError> {
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>()?;
-    Ok(web::block(move || get_me_list(user_id_f, db)).await
+    Ok(web::block(move || get_images_list(user_id_f, db)).await
         .map(|res| HttpResponse::Ok().json(res))?)
 }
 
-fn get_me_list(
+fn get_images_list(
     user_id_f: i32,
     pool: web::Data<Pool>,
 ) -> Result<std::vec::Vec<Image>, AppError> {
