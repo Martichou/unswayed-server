@@ -25,9 +25,8 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 pub fn validate_token(token: &str, pool: web::Data<Pool>) -> Result<(bool, std::string::String), AppError> {
     let conn = pool.get()?;
     let access_token_f = access_tokens.filter(access_token.eq(token)).select((user_id, created_at)).first::<(i32, chrono::NaiveDateTime)>(&conn)?;
-    let data = access_token_f;
-    if chrono::Local::now().naive_local() - Duration::hours(2) < data.1 {
-        Ok((true, String::from(data.0.to_string())))
+    if chrono::Local::now().naive_local() - Duration::hours(2) < access_token_f.1 {
+        Ok((true, String::from(access_token_f.0.to_string())))
     } else {
         Err(AppError { message: None, cause: None, error_type: AppErrorType::InvalidToken })
     }
