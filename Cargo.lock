@@ -2572,6 +2572,7 @@ version = "0.1.0"
 dependencies = [
  "actix-multipart",
  "actix-rt",
+ "actix-threadpool",
  "actix-web",
  "actix-web-httpauth",
  "async-std",

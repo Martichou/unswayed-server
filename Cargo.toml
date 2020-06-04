@@ -8,9 +8,10 @@ edition = "2018"
 
 [dependencies]
 actix-rt = "1.1.1"
-actix-web = { version = "2.0.0", features = ["openssl"] }
 actix-multipart = "0.2.0"
+actix-threadpool = "0.3.2"
 actix-web-httpauth = "0.4.1"
+actix-web = { version = "2.0.0", features = ["openssl"] }
 diesel = { version = "1.4.4", features = ["postgres", "r2d2", "chrono"] }
 chrono = { version = "0.4.11", features = ["serde"] }
 sanitize-filename = "0.2"
