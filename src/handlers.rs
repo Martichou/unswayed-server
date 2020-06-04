@@ -78,7 +78,7 @@ fn auth_single_user(
         };
         Ok(insert_into(access_tokens).values(&new_access_token).get_result(&conn)?)
     } else {
-        Err(diesel::result::Error::NotFound)
+        Err(user_id_f.unwrap_err())
     }
 }
 
@@ -109,6 +109,6 @@ fn auth_refresh_token(
         diesel::delete(access_tokens.filter(refresh_token.eq(&item.refresh_token))).execute(&conn)?;
         Ok(insert_into(access_tokens).values(&new_access_token).get_result(&conn)?)
     } else {
-        Err(diesel::result::Error::NotFound)
+        Err(access_tokens_f.unwrap_err())
     }
 }

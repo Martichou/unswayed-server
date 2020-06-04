@@ -47,8 +47,7 @@ pub async fn upload_one(
 ) -> Result<HttpResponse, Error> {
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>().unwrap();
     let pl = split_payload(user_id_f, &db, payload.borrow_mut()).await;
-    let callback = save_file(user_id_f, &db, pl).await.unwrap();
-    Ok(HttpResponse::Ok().json(callback))
+    Ok(HttpResponse::Ok().json(save_file(user_id_f, &db, pl).await.unwrap()))
 }
 
 pub async fn get_list(
@@ -84,12 +83,16 @@ pub async fn get_one(
             endpoint: format!("https://{}.linodeobjects.com", std::env::var("AWS_REGION").unwrap()).to_owned()
         });
         let get_req = GetObjectRequest {
-            bucket: std::string::String::from("unswayed"),
+            bucket: std::env::var("AWS_S3_BUCKET_NAME").unwrap(),
             key: item_f.unwrap(),
             ..Default::default()
         };
-        let result = s3.get_object(get_req).await.expect("Could not get object");
-        Ok(HttpResponse::Ok().streaming(result.body.unwrap()))
+        let result = s3.get_object(get_req).await;
+        if result.is_ok() {
+            Ok(HttpResponse::Ok().streaming(result.unwrap().body.unwrap()))
+        } else {
+            Ok(HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR))
+        }
     } else {
         Ok(HttpResponse::new(StatusCode::UNAUTHORIZED))
     }
