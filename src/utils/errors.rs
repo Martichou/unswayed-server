@@ -1,5 +1,5 @@
-use actix_web::{error::ResponseError, HttpResponse, http::StatusCode};
 use actix_threadpool;
+use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use serde::Serialize;
 use std::fmt;
 
@@ -11,7 +11,7 @@ pub enum AppErrorType {
     InvalidCrendetials,
     KeyAlreadyExists,
     InvalidToken,
-    InvalidRequest
+    InvalidRequest,
 }
 
 #[derive(Debug)]
@@ -81,7 +81,7 @@ impl ResponseError for AppError {
             AppErrorType::InvalidToken => StatusCode::UNAUTHORIZED,
             AppErrorType::InvalidCrendetials => StatusCode::UNAUTHORIZED,
             AppErrorType::InvalidRequest => StatusCode::BAD_REQUEST,
-            _ => StatusCode::INTERNAL_SERVER_ERROR
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
     fn error_response(&self) -> HttpResponse {
@@ -96,7 +96,7 @@ impl From<std::num::ParseIntError> for AppError {
         AppError {
             message: None,
             cause: Some(error.to_string()),
-            error_type: AppErrorType::DbError
+            error_type: AppErrorType::DbError,
         }
     }
 }
@@ -109,7 +109,11 @@ where
     fn from(error: actix_threadpool::BlockingError<E>) -> AppError {
         match error {
             actix_threadpool::BlockingError::Error(e) => e.into(),
-            actix_threadpool::BlockingError::Canceled => AppError {message: None, cause: None, error_type: AppErrorType::DbError},
+            actix_threadpool::BlockingError::Canceled => AppError {
+                message: None,
+                cause: None,
+                error_type: AppErrorType::DbError,
+            },
         }
     }
 }
@@ -119,7 +123,7 @@ impl From<diesel::result::Error> for AppError {
         AppError {
             message: None,
             cause: Some(error.to_string()),
-            error_type: AppErrorType::DbError
+            error_type: AppErrorType::DbError,
         }
     }
 }
@@ -130,7 +134,11 @@ where
     E: Into<AppError>,
 {
     fn from(_: rusoto_core::RusotoError<E>) -> AppError {
-        AppError {message: None, cause: None, error_type: AppErrorType::RusotoError}
+        AppError {
+            message: None,
+            cause: None,
+            error_type: AppErrorType::RusotoError,
+        }
     }
 }
 
@@ -139,7 +147,7 @@ impl From<rusoto_s3::GetObjectError> for AppError {
         AppError {
             message: None,
             cause: Some(error.to_string()),
-            error_type: AppErrorType::DbError
+            error_type: AppErrorType::DbError,
         }
     }
 }
@@ -149,7 +157,7 @@ impl From<r2d2::Error> for AppError {
         AppError {
             message: None,
             cause: Some(error.to_string()),
-            error_type: AppErrorType::PoolError
+            error_type: AppErrorType::PoolError,
         }
     }
 }

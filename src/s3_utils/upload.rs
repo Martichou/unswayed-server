@@ -1,22 +1,22 @@
 use crate::diesel::BoolExpressionMethods;
 use crate::diesel::ExpressionMethods;
-use crate::schema::images::dsl::*;
-use crate::diesel::RunQueryDsl;
 use crate::diesel::QueryDsl;
+use crate::diesel::RunQueryDsl;
 use crate::models::NewImage;
+use crate::schema::images::dsl::*;
 
 use super::s3;
 
-use diesel::dsl::{insert_into, exists, select};
 use actix_multipart::{Field, Multipart};
-use serde::{Deserialize, Serialize};
-use diesel::r2d2::ConnectionManager;
-use diesel::prelude::PgConnection;
 use actix_web::{web, Error};
+use diesel::dsl::{exists, insert_into, select};
+use diesel::prelude::PgConnection;
+use diesel::r2d2::ConnectionManager;
 use futures::StreamExt;
+use nanoid::nanoid;
+use serde::{Deserialize, Serialize};
 use std::convert::From;
 use std::io::Write;
-use nanoid::nanoid;
 
 type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -62,7 +62,9 @@ impl Tmpfile {
 
     async fn s3_upload(&mut self) {
         let path = format!("{}", &self.name);
-        let url: String = s3::Client::new().put_object(&self.tmp_path, &path.clone()).await;
+        let url: String = s3::Client::new()
+            .put_object(&self.tmp_path, &path.clone())
+            .await;
         self.s3_url = url;
     }
 
@@ -74,7 +76,7 @@ impl Tmpfile {
 pub async fn split_payload(
     user_id_f: i32,
     pool: &web::Data<Pool>,
-    payload: &mut Multipart
+    payload: &mut Multipart,
 ) -> Vec<Tmpfile> {
     let conn = pool.get().unwrap();
     let mut tmp_files: Vec<Tmpfile> = Vec::new();
@@ -87,18 +89,26 @@ pub async fn split_payload(
             match content_type.get_filename() {
                 Some(filename) => {
                     // Check if the filename already exist for that user
-                    let item_exist: std::result::Result<bool, diesel::result::Error> = select(exists(images.filter(realname.eq(filename).and(user_id.eq(user_id_f))))).get_result(&conn);
+                    let item_exist: std::result::Result<bool, diesel::result::Error> = select(
+                        exists(images.filter(realname.eq(filename).and(user_id.eq(user_id_f)))),
+                    )
+                    .get_result(&conn);
                     // If found or error skip
                     if item_exist.is_err() || item_exist.unwrap() {
-                        continue ;
+                        continue;
                     // Else process
                     } else {
-                        let tmp_file = Tmpfile::new(nanoid!(128), &sanitize_filename::sanitize(&filename));
+                        let tmp_file =
+                            Tmpfile::new(nanoid!(128), &sanitize_filename::sanitize(&filename));
                         let tmp_path = tmp_file.tmp_path.clone();
-                        let mut f = web::block(move || std::fs::File::create(&tmp_path)).await.unwrap();
+                        let mut f = web::block(move || std::fs::File::create(&tmp_path))
+                            .await
+                            .unwrap();
                         while let Some(chunk) = field.next().await {
                             let data = chunk.unwrap();
-                            f = web::block(move || f.write_all(&data).map(|_| f)).await.unwrap();
+                            f = web::block(move || f.write_all(&data).map(|_| f))
+                                .await
+                                .unwrap();
                         }
                         tmp_files.push(tmp_file.clone());
                     }

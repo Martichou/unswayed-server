@@ -1,42 +1,59 @@
 #[macro_use]
 extern crate diesel;
 
-mod routes_auth;
-mod routes_api;
-mod s3_utils;
 mod models;
+mod routes_api;
+mod routes_auth;
+mod s3_utils;
 mod schema;
 mod utils;
 
-use actix_web::{dev::ServiceRequest, web, App, Error, http::header, HttpServer};
+use actix_web::{dev::ServiceRequest, http::header, web, App, Error, HttpServer};
 use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
 use actix_web_httpauth::extractors::AuthenticationError;
 use actix_web_httpauth::middleware::HttpAuthentication;
-use utils::errors::{AppError, AppErrorType};
+use chrono::Duration;
+use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
 use schema::access_tokens::dsl::*;
-use diesel::prelude::*;
 use std::str::FromStr;
-use chrono::Duration;
+use utils::errors::{AppError, AppErrorType};
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-pub fn validate_token(token: &str, pool: web::Data<Pool>) -> Result<(bool, std::string::String), AppError> {
+pub fn validate_token(
+    token: &str,
+    pool: web::Data<Pool>,
+) -> Result<(bool, std::string::String), AppError> {
     let conn = pool.get()?;
-    let access_token_f = access_tokens.filter(access_token.eq(token)).select((user_id, created_at)).first::<(i32, chrono::NaiveDateTime)>(&conn);
+    let access_token_f = access_tokens
+        .filter(access_token.eq(token))
+        .select((user_id, created_at))
+        .first::<(i32, chrono::NaiveDateTime)>(&conn);
     if access_token_f.is_ok() {
         let access_token_f = access_token_f.unwrap();
         if chrono::Local::now().naive_local() - Duration::hours(2) < access_token_f.1 {
             Ok((true, String::from(access_token_f.0.to_string())))
         } else {
-            Err(AppError { message: None, cause: None, error_type: AppErrorType::InvalidToken })
+            Err(AppError {
+                message: None,
+                cause: None,
+                error_type: AppErrorType::InvalidToken,
+            })
         }
     } else {
-        Err(AppError { message: None, cause: None, error_type: AppErrorType::InvalidToken })
+        Err(AppError {
+            message: None,
+            cause: None,
+            error_type: AppErrorType::InvalidToken,
+        })
     }
 }
 
-async fn validator(mut req: ServiceRequest, credentials: BearerAuth) -> Result<ServiceRequest, Error> {
+async fn validator(
+    mut req: ServiceRequest,
+    credentials: BearerAuth,
+) -> Result<ServiceRequest, Error> {
     let config = req
         .app_data::<Config>()
         .map(|data| data.get_ref().clone())
@@ -71,7 +88,9 @@ async fn main() -> std::io::Result<()> {
     std::env::var("AWS_REGION").expect("BINDAWS_REGIONING must be set");
 
     let manager = ConnectionManager::<PgConnection>::new(database_url);
-    let pool: Pool = r2d2::Pool::builder().build(manager).expect("Failed to create pool.");
+    let pool: Pool = r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.");
 
     HttpServer::new(move || {
         let auth = HttpAuthentication::bearer(validator);
@@ -87,9 +106,8 @@ async fn main() -> std::io::Result<()> {
                     .route("/upload", web::post().to(routes_api::upload_one))
                     .route("/mine", web::get().to(routes_api::get_mine))
                     .service(
-                        web::scope("/get")
-                            .route("{filename}", web::get().to(routes_api::get_one))
-                    )
+                        web::scope("/get").route("{filename}", web::get().to(routes_api::get_one)),
+                    ),
             )
     })
     .bind(binding)?

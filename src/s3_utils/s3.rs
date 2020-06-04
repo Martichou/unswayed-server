@@ -14,7 +14,11 @@ impl Client {
     pub fn new() -> Client {
         let region = Region::Custom {
             name: std::env::var("AWS_REGION").unwrap().to_owned(),
-            endpoint: format!("https://{}.linodeobjects.com", std::env::var("AWS_REGION").unwrap()).to_owned()
+            endpoint: format!(
+                "https://{}.linodeobjects.com",
+                std::env::var("AWS_REGION").unwrap()
+            )
+            .to_owned(),
         };
 
         Client {
@@ -43,7 +47,11 @@ impl Client {
             body: Some(contents.into()),
             ..Default::default()
         };
-        let _res = self.s3.put_object(put_request).await.expect("Failed to put test object");
+        let _res = self
+            .s3
+            .put_object(put_request)
+            .await
+            .expect("Failed to put test object");
         self.url(path)
     }
 
@@ -53,6 +61,10 @@ impl Client {
             key: path.to_owned(),
             ..Default::default()
         };
-        let _res = self.s3.delete_object(delete_object_req).await.expect("Couldn't delete object");
+        let _res = self
+            .s3
+            .delete_object(delete_object_req)
+            .await
+            .expect("Couldn't delete object");
     }
 }
