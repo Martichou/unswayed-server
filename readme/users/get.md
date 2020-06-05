@@ -22,7 +22,19 @@ the raw data of the filename
 
 ## Error Response
 
-**Condition** : If the filename doesn't belong to the user
+**Condition** : If the token is invalid or expired
+
+**Code** : `401 UNAUTHORIZED`
+
+**Content** :
+
+```json
+{
+  "error": "The token is invalid or has been expired"
+}
+```
+
+**Condition** : If the filename doesn't belong to the user or does not exist
 
 **Code** : `400 BAD REQUEST`
 
