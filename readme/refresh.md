@@ -34,9 +34,11 @@ Used to get a new Token for a registered User from a refresh_token.
 {
 	"id": 8,
 	"user_id": 1,
+	"token_type": 1,
 	"access_token": "UMrkriQk89KdAZ4F9XlEtTjcal6WUMI0ovk182jNCPzboZpu7bS94NCqU2XwoFHF",
 	"refresh_token": "FzhG-VfcKAt_BoljSPPCCzHZxG-adLDD60BKFhDUgVuC00yqK7cksmNNoJF976h4",
-	"created_at": "2020-06-04T18:11:04.187270"
+	"created_at": "2020-06-04T18:11:04.187270",
+	"expire_at": "2020-06-04T13:49:51.926297"
 }
 ```
 

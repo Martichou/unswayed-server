@@ -11,6 +11,7 @@ use crate::utils::errors::AppError;
 use crate::utils::errors::AppErrorType;
 
 use actix_web::{web, HttpResponse};
+use chrono::Duration;
 use diesel::dsl::{exists, insert_into, select};
 use nanoid::nanoid;
 use regex::Regex;
@@ -98,9 +99,11 @@ fn auth_single_user(
     if user_id_f.is_ok() {
         let new_access_token = NewAccessToken {
             user_id: user_id_f.unwrap(),
+            token_type: 1,
             access_token: nanoid!(64),
             refresh_token: nanoid!(64),
             created_at: chrono::Local::now().naive_local(),
+            expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
         };
         Ok(insert_into(access_tokens)
             .values(&new_access_token)
@@ -135,9 +138,11 @@ fn auth_refresh_token(
     if access_tokens_f.is_ok() {
         let new_access_token = NewAccessToken {
             user_id: access_tokens_f.unwrap(),
+            token_type: 1,
             access_token: nanoid!(64),
             refresh_token: nanoid!(64),
             created_at: chrono::Local::now().naive_local(),
+            expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
         };
         diesel::delete(access_tokens.filter(refresh_token.eq(&item.refresh_token)))
             .execute(&conn)?;

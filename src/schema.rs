@@ -2,9 +2,11 @@ table! {
     access_tokens (id) {
         id -> Int4,
         user_id -> Int4,
+        token_type -> Int4,
         access_token -> Text,
         refresh_token -> Text,
         created_at -> Timestamp,
+        expire_at -> Timestamp,
     }
 }
 

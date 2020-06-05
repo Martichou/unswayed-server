@@ -36,9 +36,11 @@ Used to collect a Token for a registered User.
 {
 	"id": 5,
 	"user_id": 1,
+	"token_type": 1,
 	"access_token": "25y4wHPlq0MCUxvoW5U36O3ZoFe73n9F_dTJ9Ei_b80el2G0NNosN7R7S3z2sR9f",
 	"refresh_token": "aSxGF8aX25EifSaGuwFO2xeqJiPEyJx55oqxa-7EznQ-HjVASlADwaYd7VMd4s7i",
-	"created_at": "2020-06-04T11:49:51.926297"
+	"created_at": "2020-06-04T11:49:51.926297",
+	"expire_at": "2020-06-04T13:49:51.926297"
 }
 ```
 

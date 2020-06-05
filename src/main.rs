@@ -24,16 +24,16 @@ pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub fn validate_token(
     token: &str,
     pool: web::Data<Pool>,
-) -> Result<(bool, std::string::String), AppError> {
+) -> Result<(bool, std::string::String, i32, &str), AppError> {
     let conn = pool.get()?;
     let access_token_f = access_tokens
         .filter(access_token.eq(token))
-        .select((user_id, created_at))
-        .first::<(i32, chrono::NaiveDateTime)>(&conn);
+        .select((user_id, expire_at, token_type))
+        .first::<(i32, chrono::NaiveDateTime, i32)>(&conn);
     if access_token_f.is_ok() {
         let access_token_f = access_token_f.unwrap();
         if chrono::Local::now().naive_local() - Duration::hours(2) < access_token_f.1 {
-            Ok((true, String::from(access_token_f.0.to_string())))
+            Ok((true, access_token_f.0.to_string(), access_token_f.2, token))
         } else {
             Err(AppError {
                 message: None,
@@ -66,6 +66,16 @@ async fn validator(
                     header::HeaderName::from_str("user_id").unwrap(),
                     header::HeaderValue::from_str(&res.1).unwrap(),
                 );
+                req.headers_mut().insert(
+                    header::HeaderName::from_str("token_type").unwrap(),
+                    header::HeaderValue::from_str(&res.2.to_string()).unwrap(),
+                );
+                if &res.2 == &2 {
+                    req.headers_mut().insert(
+                        header::HeaderName::from_str("token").unwrap(),
+                        header::HeaderValue::from_str(&res.3).unwrap(),
+                    );
+                }
                 Ok(req)
             } else {
                 Err(AuthenticationError::from(config).into())
@@ -105,6 +115,14 @@ async fn main() -> std::io::Result<()> {
                     .route("/me", web::get().to(routes_api::get_me))
                     .route("/upload", web::post().to(routes_api::upload_one))
                     .route("/mine", web::get().to(routes_api::get_mine))
+                    .service(
+                        web::scope("/token")
+                            .route("special", web::get().to(routes_api::get_special))
+                            .route(
+                                "special_keepalive",
+                                web::patch().to(routes_api::patch_special_keepalive),
+                            ),
+                    )
                     .service(
                         web::scope("/get").route("{filename}", web::get().to(routes_api::get_one)),
                     ),

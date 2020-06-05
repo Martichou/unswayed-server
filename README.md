@@ -27,6 +27,8 @@ Token is provided with the request:
 * [List Images](readme/users/mine.md) : `GET /api/mine`
 * [Upload Images](readme/users/upload.md) : `POST /api/upload`
 * [Get Image](readme/users/get.md) : `GET /api/get/{filename}`
+* [Special Token](readme/users/token/special.md) : `GET /api/token/special`
+* [Special KeppAlive](readme/users/token/special_keepalive.md) : `PATCH /api/token/special_keepalive`
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
