@@ -2,7 +2,7 @@
 
 Used to get the user_information.
 
-**URL** : `/api/upload`
+**URL** : `/api/files/upload`
 
 **Method** : `POST`
 

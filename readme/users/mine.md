@@ -2,7 +2,7 @@
 
 Used to get alls images informations uploaded by the users.
 
-**URL** : `/api/mine`
+**URL** : `/api/users/mine`
 
 **Method** : `GET`
 

@@ -23,12 +23,17 @@ request. A Token can be acquired from the Access Token above.
 Each endpoint manipulates or displays information related to the User whose
 Token is provided with the request:
 
-* [Me](readme/users/me.md) : `GET /api/me`
-* [List Images](readme/users/mine.md) : `GET /api/mine`
-* [Upload Images](readme/users/upload.md) : `POST /api/upload`
-* [Get Image](readme/users/get.md) : `GET /api/get/{filename}`
-* [Special Token](readme/users/token/special.md) : `GET /api/token/special`
-* [Special KeepAlive](readme/users/token/special_keepalive.md) : `PATCH /api/token/special_keepalive`
+#### Users informations
+* [Me](readme/users/me.md) : `GET /api/users/me`
+* [List Images](readme/users/mine.md) : `GET /api/users/mine`
+
+#### Files related
+* [Upload Images](readme/files/upload.md) : `POST /api/files/upload`
+* [Get Image](readme/files/get.md) : `GET /api/files/get/{filename}`
+
+#### Special (token)
+* [Special Token](readme/special/token.md) : `GET /api/special/token`
+* [Special KeepAlive](readme/special/token_keepalive.md) : `PATCH /api/special/token_keepalive`
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

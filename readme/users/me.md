@@ -2,7 +2,7 @@
 
 Used to get the user_information.
 
-**URL** : `/api/me`
+**URL** : `/api/users/me`
 
 **Method** : `GET`
 

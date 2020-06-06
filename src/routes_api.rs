@@ -47,7 +47,7 @@ fn get_me_info(user_id_f: i32, pool: web::Data<Pool>) -> Result<User, AppError> 
         .first::<User>(&conn)?)
 }
 
-pub async fn upload_one(
+pub async fn post_upload_one(
     req: HttpRequest,
     mut payload: Multipart,
     db: web::Data<Pool>,
@@ -72,7 +72,7 @@ fn get_images_list(
     Ok(images.filter(user_id.eq(user_id_f)).load(&conn)?)
 }
 
-pub async fn get_one(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
+pub async fn get_file(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
     let conn = db.get()?;
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>()?;
     let filename = sanitize_filename::sanitize(req.match_info().query("filename"));
@@ -105,7 +105,10 @@ pub async fn get_one(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpRespon
     }
 }
 
-pub async fn get_special(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
+pub async fn get_specialtoken(
+    req: HttpRequest,
+    db: web::Data<Pool>,
+) -> Result<HttpResponse, AppError> {
     let conn = db.get()?;
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>()?;
     let new_access_token = NewAccessToken {
@@ -122,7 +125,7 @@ pub async fn get_special(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpRe
         .map(|res: AccessToken| HttpResponse::Ok().json(res))?)
 }
 
-pub async fn patch_special_keepalive(
+pub async fn patch_specialtoken_keepalive(
     req: HttpRequest,
     db: web::Data<Pool>,
 ) -> Result<HttpResponse, AppError> {

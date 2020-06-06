@@ -1,8 +1,8 @@
-# Special
+# Special Token
 
-The Special token is a token with a longer validity and which allow you to refresh the validity lifetime.
+The Special Token is a token with a longer validity and which allow you to refresh the validity lifetime.
 
-**URL** : `/api/token/special`
+**URL** : `/api/special/token/`
 
 **Method** : `GET`
 

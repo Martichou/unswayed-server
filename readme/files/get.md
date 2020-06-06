@@ -2,7 +2,7 @@
 
 Used to get an image previously uploaded.
 
-**URL** : `/api/get/{filename}`
+**URL** : `/api/files/get/{filename}`
 
 **Method** : `GET`
 

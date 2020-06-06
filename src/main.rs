@@ -112,19 +112,23 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .wrap(auth)
-                    .route("/me", web::get().to(routes_api::get_me))
-                    .route("/upload", web::post().to(routes_api::upload_one))
-                    .route("/mine", web::get().to(routes_api::get_mine))
                     .service(
-                        web::scope("/token")
-                            .route("special", web::get().to(routes_api::get_special))
+                        web::scope("/users")
+                            .route("/me", web::get().to(routes_api::get_me))
+                            .route("/mine", web::get().to(routes_api::get_mine)),
+                    )
+                    .service(
+                        web::scope("/special")
+                            .route("token", web::get().to(routes_api::get_specialtoken))
                             .route(
-                                "special_keepalive",
-                                web::patch().to(routes_api::patch_special_keepalive),
+                                "token_keepalive",
+                                web::patch().to(routes_api::patch_specialtoken_keepalive),
                             ),
                     )
                     .service(
-                        web::scope("/get").route("{filename}", web::get().to(routes_api::get_one)),
+                        web::scope("/files")
+                            .route("/upload", web::post().to(routes_api::post_upload_one))
+                            .route("/get/{filename}", web::get().to(routes_api::get_file)),
                     ),
             )
     })

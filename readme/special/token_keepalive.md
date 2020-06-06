@@ -1,8 +1,8 @@
-# Special
+# Special Token Keep Alive
 
 Add 6 more hours to your special token.
 
-**URL** : `/api/token/special_keepalive`
+**URL** : `/api/token/token_keepalive`
 
 **Method** : `PATCH`
 
