@@ -1,15 +1,17 @@
-use super::models::{AccessToken, NewAccessToken, NewUser, User};
+use super::models::{AccessToken, NewAccessToken, NewUser};
 use super::schema::access_tokens::dsl::*;
 use super::schema::users::dsl::*;
 use super::Pool;
 
-use crate::diesel::BoolExpressionMethods;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
 use crate::utils::errors::AppError;
 use crate::utils::errors::AppErrorType;
+use crate::argon2;
 
+use argon2::Config;
+use rand::Rng;
 use actix_web::{web, HttpResponse};
 use chrono::Duration;
 use diesel::dsl::{exists, insert_into, select};
@@ -40,12 +42,10 @@ pub async fn add_user(
     db: web::Data<Pool>,
     item: web::Json<InputUser>,
 ) -> Result<HttpResponse, AppError> {
-    Ok(web::block(move || add_single_user(db, item))
-        .await
-        .map(|user| HttpResponse::Created().json(user))?)
+    Ok(add_single_user(db, item)?)
 }
 
-fn add_single_user(db: web::Data<Pool>, item: web::Json<InputUser>) -> Result<User, AppError> {
+fn add_single_user(db: web::Data<Pool>, item: web::Json<InputUser>) -> Result<HttpResponse, AppError> {
     let conn = db.get()?;
     if !email_valid(&item.email) {
         return Err(AppError {
@@ -54,9 +54,11 @@ fn add_single_user(db: web::Data<Pool>, item: web::Json<InputUser>) -> Result<Us
             error_type: AppErrorType::InvalidRequest,
         });
     }
+    let salt = rand::thread_rng().gen::<[u8; 32]>();
+    let config = Config::default();
     let new_user = NewUser {
         email: &item.email,
-        passwd: &item.passwd,
+        passwd: &argon2::hash_encoded(&item.passwd.as_bytes(), &salt, &config).unwrap(),
         created_at: chrono::Local::now().naive_local(),
     };
     let item_exist = select(exists(users.filter(email.eq(&item.email)))).get_result(&conn)?;
@@ -67,7 +69,8 @@ fn add_single_user(db: web::Data<Pool>, item: web::Json<InputUser>) -> Result<Us
             error_type: AppErrorType::KeyAlreadyExists,
         })
     } else {
-        Ok(insert_into(users).values(&new_user).get_result(&conn)?)
+        insert_into(users).values(&new_user).execute(&conn)?;
+        Ok(HttpResponse::Created().finish())
     }
 }
 
@@ -93,21 +96,32 @@ fn auth_single_user(
         });
     }
     let user_id_f = users
-        .filter(email.eq(&item.email).and(passwd.eq(&item.passwd)))
-        .select(super::schema::users::dsl::id)
-        .first(&conn);
+        .filter(email.eq(&item.email))
+        .select((super::schema::users::dsl::id, super::schema::users::dsl::passwd))
+        .first::<(i32, String)>(&conn);
     if user_id_f.is_ok() {
-        let new_access_token = NewAccessToken {
-            user_id: user_id_f.unwrap(),
-            token_type: 1,
-            access_token: nanoid!(64),
-            refresh_token: nanoid!(64),
-            created_at: chrono::Local::now().naive_local(),
-            expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
-        };
-        Ok(insert_into(access_tokens)
-            .values(&new_access_token)
-            .get_result(&conn)?)
+        let user_id_f = user_id_f.unwrap();
+        // Check for the Argon2 password...
+        let matches = argon2::verify_encoded(&user_id_f.1, &item.passwd.as_bytes());
+        if matches.is_ok() && matches.unwrap() {
+            let new_access_token = NewAccessToken {
+                user_id: user_id_f.0,
+                token_type: 1,
+                access_token: nanoid!(64),
+                refresh_token: nanoid!(64),
+                created_at: chrono::Local::now().naive_local(),
+                expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
+            };
+            Ok(insert_into(access_tokens)
+                .values(&new_access_token)
+                .get_result(&conn)?)
+        } else {
+            Err(AppError {
+                message: None,
+                cause: None,
+                error_type: AppErrorType::InvalidCrendetials,
+            })
+        }
     } else {
         Err(AppError {
             message: None,

@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate diesel;
+extern crate argon2;
 
 mod models;
 mod routes_api;

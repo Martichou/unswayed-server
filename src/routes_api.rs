@@ -1,4 +1,4 @@
-use super::models::{AccessToken, Image, NewAccessToken, User};
+use super::models::{AccessToken, Image, NewAccessToken};
 use super::s3_utils::upload::{save_file, split_payload};
 use super::schema::access_tokens::dsl::{access_token, access_tokens, expire_at};
 use super::schema::images::dsl::*;
@@ -20,6 +20,12 @@ use rusoto_core::Region;
 use rusoto_s3::S3;
 use rusoto_s3::{GetObjectRequest, S3Client};
 use std::borrow::BorrowMut;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfoUser {
+    pub email: String,
+}
 
 fn get_user_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
     req.headers().get("user_id")?.to_str().ok()
@@ -40,11 +46,12 @@ pub async fn get_me(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpRespons
         .map(|user| HttpResponse::Ok().json(user))?)
 }
 
-fn get_me_info(user_id_f: i32, pool: web::Data<Pool>) -> Result<User, AppError> {
+fn get_me_info(user_id_f: i32, pool: web::Data<Pool>) -> Result<InfoUser, AppError> {
     let conn = pool.get()?;
     Ok(users
         .filter(super::schema::users::dsl::id.eq(&user_id_f))
-        .first::<User>(&conn)?)
+        .select(super::schema::users::dsl::email)
+        .first::<String>(&conn).map(|emailstd| InfoUser{email: emailstd})?)
 }
 
 pub async fn post_upload_one(
