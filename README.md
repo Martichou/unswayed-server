@@ -35,6 +35,14 @@ Token is provided with the request:
 * [Special Token](readme/special/token.md) : `GET /api/special/token`
 * [Special KeepAlive](readme/special/token_keepalive.md) : `PATCH /api/special/token_keepalive`
 
+
+## Windows (WSL2) port forwarding
+If you're working on Windows using WSL2 you might need to forward the port from the host to wsl.
+
+``sh
+netsh interface portproxy add v4tov4 listenport=8080 listenaddress=192.168.1.19 connectport=8080 connectaddress=172.20.14.205
+``
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
