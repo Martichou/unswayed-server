@@ -15,7 +15,7 @@ impl Client {
         let region = Region::Custom {
             name: std::env::var("AWS_REGION").unwrap().to_owned(),
             endpoint: format!(
-                "https://{}.linodeobjects.com",
+                "https://s3.{}.scw.cloud",
                 std::env::var("AWS_REGION").unwrap()
             )
             .to_owned(),
@@ -30,7 +30,7 @@ impl Client {
 
     pub fn url(&self, path: &str) -> String {
         format!(
-            "https://{}.{}.linodeobjects.com/{}",
+            "https://{}.s3.{}.scw.cloud/{}",
             std::env::var("AWS_S3_BUCKET_NAME").unwrap(),
             std::env::var("AWS_REGION").unwrap(),
             path
