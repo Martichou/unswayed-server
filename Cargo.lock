@@ -2393,6 +2393,7 @@ dependencies = [
  "dotenv",
  "futures",
  "nanoid",
+ "openssl",
  "r2d2",
  "rand 0.7.3",
  "regex",

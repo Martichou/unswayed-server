@@ -16,6 +16,7 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use chrono::Duration;
 use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use schema::access_tokens::dsl::*;
 use std::str::FromStr;
 use utils::errors::{AppError, AppErrorType};
@@ -98,6 +99,10 @@ async fn main() -> std::io::Result<()> {
     std::env::var("AWS_S3_BUCKET_NAME").expect("AWS_S3_BUCKET_NAME must be set");
     std::env::var("AWS_REGION").expect("BINDAWS_REGIONING must be set");
 
+    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    builder.set_private_key_file("key.pem", SslFiletype::PEM).unwrap();
+    builder.set_certificate_chain_file("cert.pem").unwrap();
+
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool: Pool = r2d2::Pool::builder()
         .build(manager)
@@ -133,7 +138,7 @@ async fn main() -> std::io::Result<()> {
                     ),
             )
     })
-    .bind(binding)?
+    .bind_openssl(binding, builder)?
     .run()
     .await
 }
