@@ -93,6 +93,8 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=debug");
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let binding = std::env::var("BINDING").expect("BINDING must be set");
+    let key = std::env::var("KEY_PRIV").expect("BINDING must be set");
+    let cert = std::env::var("KEY_CERT").expect("BINDING must be set");
     // Checking if envs are set correctly
     std::env::var("AWS_ACCESS_KEY_ID").expect("AWS_ACCESS_KEY_ID must be set");
     std::env::var("AWS_SECRET_ACCESS_KEY").expect("AWS_SECRET_ACCESS_KEY must be set");
@@ -100,8 +102,8 @@ async fn main() -> std::io::Result<()> {
     std::env::var("AWS_REGION").expect("BINDAWS_REGIONING must be set");
 
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    builder.set_private_key_file("key.pem", SslFiletype::PEM).unwrap();
-    builder.set_certificate_chain_file("cert.pem").unwrap();
+    builder.set_private_key_file(key, SslFiletype::PEM).unwrap();
+    builder.set_certificate_chain_file(cert).unwrap();
 
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool: Pool = r2d2::Pool::builder()
