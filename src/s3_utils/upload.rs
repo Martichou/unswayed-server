@@ -24,7 +24,6 @@ type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub struct UploadFile {
     pub realname: String,
     pub filename: String,
-    pub url: String,
 }
 
 impl From<Tmpfile> for UploadFile {
@@ -32,7 +31,6 @@ impl From<Tmpfile> for UploadFile {
         UploadFile {
             realname: tmp_file.realname,
             filename: tmp_file.name,
-            url: tmp_file.s3_url,
         }
     }
 }
@@ -42,7 +40,6 @@ pub struct Tmpfile {
     pub name: String,
     pub realname: String,
     pub tmp_path: String,
-    pub s3_url: String,
 }
 
 impl Tmpfile {
@@ -51,7 +48,6 @@ impl Tmpfile {
             name: filename.to_string(),
             realname: real_name.to_string(),
             tmp_path: format!("./tmp/{}", real_name),
-            s3_url: "".to_string(),
         }
     }
 
@@ -62,10 +58,7 @@ impl Tmpfile {
 
     async fn s3_upload(&mut self) {
         let path = format!("{}", &self.name);
-        let url: String = Client::new()
-            .put_object(&self.tmp_path, &path.clone())
-            .await;
-        self.s3_url = url;
+        Client::new().put_object(&self.tmp_path, &path.clone()).await;
     }
 
     fn tmp_remove(&self) {

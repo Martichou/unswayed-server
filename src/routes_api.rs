@@ -91,7 +91,7 @@ pub async fn get_file(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpRespo
         let s3 = S3Client::new(Region::Custom {
             name: std::env::var("AWS_REGION").unwrap().to_owned(),
             endpoint: format!(
-                "https://{}.linodeobjects.com",
+                "https://s3.{}.scw.cloud",
                 std::env::var("AWS_REGION").unwrap()
             )
             .to_owned(),
