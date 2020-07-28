@@ -7,12 +7,12 @@ use crate::schema::images::dsl::*;
 
 use super::s3client::Client;
 
-use actix_multipart::{Field, Multipart};
+use actix_multipart::Multipart;
 use actix_web::{web, Error};
 use diesel::dsl::{exists, insert_into, select};
 use diesel::prelude::PgConnection;
 use diesel::r2d2::ConnectionManager;
-use futures::StreamExt;
+use futures::{StreamExt, TryStreamExt};
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::convert::From;
@@ -58,7 +58,9 @@ impl Tmpfile {
 
     async fn s3_upload(&mut self) {
         let path = format!("{}", &self.name);
-        Client::new().put_object(&self.tmp_path, &path.clone()).await;
+        Client::new()
+            .put_object(&self.tmp_path, &path.clone())
+            .await;
     }
 
     fn tmp_remove(&self) {
@@ -74,10 +76,10 @@ pub async fn split_payload(
     let conn = pool.get().unwrap();
     let mut tmp_files: Vec<Tmpfile> = Vec::new();
 
-    while let Some(item) = payload.next().await {
-        let mut field: Field = item.expect("split_payload err");
+    while let Ok(Some(mut field)) = payload.try_next().await {
         let content_type = field.content_disposition().unwrap();
         let name = content_type.get_name().unwrap();
+
         if name == "images" {
             match content_type.get_filename() {
                 Some(filename) => {

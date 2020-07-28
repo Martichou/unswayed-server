@@ -19,8 +19,8 @@ use nanoid::nanoid;
 use rusoto_core::Region;
 use rusoto_s3::S3;
 use rusoto_s3::{GetObjectRequest, S3Client};
-use std::borrow::BorrowMut;
 use serde::{Deserialize, Serialize};
+use std::borrow::BorrowMut;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InfoUser {
@@ -51,7 +51,8 @@ fn get_me_info(user_id_f: i32, pool: web::Data<Pool>) -> Result<InfoUser, AppErr
     Ok(users
         .filter(super::schema::users::dsl::id.eq(&user_id_f))
         .select(super::schema::users::dsl::email)
-        .first::<String>(&conn).map(|emailstd| InfoUser{email: emailstd})?)
+        .first::<String>(&conn)
+        .map(|emailstd| InfoUser { email: emailstd })?)
 }
 
 pub async fn post_upload_one(

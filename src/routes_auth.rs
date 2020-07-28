@@ -3,19 +3,19 @@ use super::schema::access_tokens::dsl::*;
 use super::schema::users::dsl::*;
 use super::Pool;
 
+use crate::argon2;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
 use crate::utils::errors::AppError;
 use crate::utils::errors::AppErrorType;
-use crate::argon2;
 
-use argon2::Config;
-use rand::Rng;
 use actix_web::{web, HttpResponse};
+use argon2::Config;
 use chrono::Duration;
 use diesel::dsl::{exists, insert_into, select};
 use nanoid::nanoid;
+use rand::Rng;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -45,7 +45,10 @@ pub async fn add_user(
     Ok(add_single_user(db, item)?)
 }
 
-fn add_single_user(db: web::Data<Pool>, item: web::Json<InputUser>) -> Result<HttpResponse, AppError> {
+fn add_single_user(
+    db: web::Data<Pool>,
+    item: web::Json<InputUser>,
+) -> Result<HttpResponse, AppError> {
     let conn = db.get()?;
     if !email_valid(&item.email) {
         return Err(AppError {
@@ -97,7 +100,10 @@ fn auth_single_user(
     }
     let user_id_f = users
         .filter(email.eq(&item.email))
-        .select((super::schema::users::dsl::id, super::schema::users::dsl::passwd))
+        .select((
+            super::schema::users::dsl::id,
+            super::schema::users::dsl::passwd,
+        ))
         .first::<(i32, String)>(&conn);
     if user_id_f.is_ok() {
         let user_id_f = user_id_f.unwrap();

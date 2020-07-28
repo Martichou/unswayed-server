@@ -101,6 +101,8 @@ async fn main() -> std::io::Result<()> {
     std::env::var("AWS_S3_BUCKET_NAME").expect("AWS_S3_BUCKET_NAME must be set");
     std::env::var("AWS_REGION").expect("BINDAWS_REGIONING must be set");
 
+    async_std::fs::create_dir_all("./tmp").await?;
+
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
     builder.set_private_key_file(key, SslFiletype::PEM).unwrap();
     builder.set_certificate_chain_file(cert).unwrap();
