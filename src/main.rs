@@ -32,23 +32,23 @@ pub fn validate_token(
         .filter(access_token.eq(token))
         .select((user_id, expire_at, token_type))
         .first::<(i32, chrono::NaiveDateTime, i32)>(&conn);
-    if access_token_f.is_ok() {
-        let access_token_f = access_token_f.unwrap();
-        if chrono::Local::now().naive_local() - Duration::hours(2) < access_token_f.1 {
-            Ok((true, access_token_f.0.to_string(), access_token_f.2, token))
-        } else {
-            Err(AppError {
-                message: None,
-                cause: None,
-                error_type: AppErrorType::InvalidToken,
-            })
+    match access_token_f {
+        Ok(info) => {
+            if chrono::Local::now().naive_local() - Duration::hours(2) < info.1 {
+                Ok((true, info.0.to_string(), info.2, token))
+            } else {
+                Err(AppError {
+                    message: None,
+                    cause: None,
+                    error_type: AppErrorType::InvalidToken,
+                })
+            }
         }
-    } else {
-        Err(AppError {
+        Err(_) => Err(AppError {
             message: None,
             cause: None,
             error_type: AppErrorType::InvalidToken,
-        })
+        }),
     }
 }
 
@@ -63,7 +63,7 @@ async fn validator(
     let pool = req.app_data::<r2d2::Pool<ConnectionManager<PgConnection>>>();
     match validate_token(credentials.token(), pool.unwrap()) {
         Ok(res) => {
-            if res.0 == true {
+            if res.0 {
                 req.headers_mut().insert(
                     header::HeaderName::from_str("user_id").unwrap(),
                     header::HeaderValue::from_str(&res.1).unwrap(),
@@ -72,7 +72,7 @@ async fn validator(
                     header::HeaderName::from_str("token_type").unwrap(),
                     header::HeaderValue::from_str(&res.2.to_string()).unwrap(),
                 );
-                if &res.2 == &2 {
+                if res.2 == 2 {
                     req.headers_mut().insert(
                         header::HeaderName::from_str("token").unwrap(),
                         header::HeaderValue::from_str(&res.3).unwrap(),
@@ -142,7 +142,8 @@ async fn main() -> std::io::Result<()> {
                     ),
             )
     })
-    .bind_openssl(binding, builder)?
+    .bind(binding)?
+    //.bind_openssl(binding, builder)?
     .run()
     .await
 }

@@ -13,12 +13,11 @@ pub struct Client {
 impl Client {
     pub fn new() -> Client {
         let region = Region::Custom {
-            name: std::env::var("AWS_REGION").unwrap().to_owned(),
+            name: std::env::var("AWS_REGION").unwrap(),
             endpoint: format!(
                 "https://s3.{}.scw.cloud",
                 std::env::var("AWS_REGION").unwrap()
-            )
-            .to_owned(),
+            ),
         };
 
         Client {

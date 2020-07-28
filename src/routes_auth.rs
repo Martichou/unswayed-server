@@ -105,35 +105,34 @@ fn auth_single_user(
             super::schema::users::dsl::passwd,
         ))
         .first::<(i32, String)>(&conn);
-    if user_id_f.is_ok() {
-        let user_id_f = user_id_f.unwrap();
-        // Check for the Argon2 password...
-        let matches = argon2::verify_encoded(&user_id_f.1, &item.passwd.as_bytes());
-        if matches.is_ok() && matches.unwrap() {
-            let new_access_token = NewAccessToken {
-                user_id: user_id_f.0,
-                token_type: 1,
-                access_token: nanoid!(64),
-                refresh_token: nanoid!(64),
-                created_at: chrono::Local::now().naive_local(),
-                expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
-            };
-            Ok(insert_into(access_tokens)
-                .values(&new_access_token)
-                .get_result(&conn)?)
-        } else {
-            Err(AppError {
-                message: None,
-                cause: None,
-                error_type: AppErrorType::InvalidCrendetials,
-            })
+    match user_id_f {
+        Ok(info) => {
+            let matches = argon2::verify_encoded(&info.1, &item.passwd.as_bytes());
+            if matches.is_ok() && matches.unwrap() {
+                let new_access_token = NewAccessToken {
+                    user_id: info.0,
+                    token_type: 1,
+                    access_token: nanoid!(64),
+                    refresh_token: nanoid!(64),
+                    created_at: chrono::Local::now().naive_local(),
+                    expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
+                };
+                Ok(insert_into(access_tokens)
+                    .values(&new_access_token)
+                    .get_result(&conn)?)
+            } else {
+                Err(AppError {
+                    message: None,
+                    cause: None,
+                    error_type: AppErrorType::InvalidCrendetials,
+                })
+            }
         }
-    } else {
-        Err(AppError {
+        Err(_) => Err(AppError {
             message: None,
             cause: None,
             error_type: AppErrorType::InvalidCrendetials,
-        })
+        }),
     }
 }
 
@@ -155,25 +154,26 @@ fn auth_refresh_token(
         .filter(refresh_token.eq(&item.refresh_token))
         .select(user_id)
         .first(&conn);
-    if access_tokens_f.is_ok() {
-        let new_access_token = NewAccessToken {
-            user_id: access_tokens_f.unwrap(),
-            token_type: 1,
-            access_token: nanoid!(64),
-            refresh_token: nanoid!(64),
-            created_at: chrono::Local::now().naive_local(),
-            expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
-        };
-        diesel::delete(access_tokens.filter(refresh_token.eq(&item.refresh_token)))
-            .execute(&conn)?;
-        Ok(insert_into(access_tokens)
-            .values(&new_access_token)
-            .get_result(&conn)?)
-    } else {
-        Err(AppError {
+    match access_tokens_f {
+        Ok(user_idd) => {
+            let new_access_token = NewAccessToken {
+                user_id: user_idd,
+                token_type: 1,
+                access_token: nanoid!(64),
+                refresh_token: nanoid!(64),
+                created_at: chrono::Local::now().naive_local(),
+                expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
+            };
+            diesel::delete(access_tokens.filter(refresh_token.eq(&item.refresh_token)))
+                .execute(&conn)?;
+            Ok(insert_into(access_tokens)
+                .values(&new_access_token)
+                .get_result(&conn)?)
+        }
+        Err(_) => Err(AppError {
             message: None,
             cause: None,
             error_type: AppErrorType::InvalidToken,
-        })
+        }),
     }
 }

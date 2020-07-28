@@ -27,15 +27,15 @@ pub struct InfoUser {
     pub email: String,
 }
 
-fn get_user_id<'a>(req: &'a HttpRequest) -> Option<&'a str> {
+fn get_user_id(req: &HttpRequest) -> Option<&str> {
     req.headers().get("user_id")?.to_str().ok()
 }
 
-fn get_token_type<'a>(req: &'a HttpRequest) -> Option<&'a str> {
+fn get_token_type(req: &HttpRequest) -> Option<&str> {
     req.headers().get("token_type")?.to_str().ok()
 }
 
-fn get_token<'a>(req: &'a HttpRequest) -> Option<&'a str> {
+fn get_token(req: &HttpRequest) -> Option<&str> {
     req.headers().get("token")?.to_str().ok()
 }
 
@@ -90,12 +90,11 @@ pub async fn get_file(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpRespo
         .first::<String>(&conn);
     if item_f.is_ok() {
         let s3 = S3Client::new(Region::Custom {
-            name: std::env::var("AWS_REGION").unwrap().to_owned(),
+            name: std::env::var("AWS_REGION").unwrap(),
             endpoint: format!(
                 "https://s3.{}.scw.cloud",
                 std::env::var("AWS_REGION").unwrap()
-            )
-            .to_owned(),
+            ),
         });
         let get_req = GetObjectRequest {
             bucket: std::env::var("AWS_S3_BUCKET_NAME").unwrap(),

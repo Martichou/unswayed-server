@@ -45,7 +45,7 @@ pub struct Tmpfile {
 impl Tmpfile {
     fn new(filename: std::string::String, real_name: &str) -> Tmpfile {
         Tmpfile {
-            name: filename.to_string(),
+            name: filename,
             realname: real_name.to_string(),
             tmp_path: format!("./tmp/{}", real_name),
         }
@@ -57,7 +57,7 @@ impl Tmpfile {
     }
 
     async fn s3_upload(&mut self) {
-        let path = format!("{}", &self.name);
+        let path = &self.name.to_string();
         Client::new()
             .put_object(&self.tmp_path, &path.clone())
             .await;
