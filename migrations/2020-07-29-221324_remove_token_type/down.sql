@@ -1,0 +1,1 @@
+ALTER TABLE access_tokens ADD token_type INT NOT NULL DEFAULT (0) WITH VALUES;

@@ -23,7 +23,6 @@ pub struct NewUser<'a> {
 pub struct AccessToken {
     pub id: i32,
     pub user_id: i32,
-    pub token_type: i32,
     pub access_token: String,
     pub refresh_token: String,
     pub created_at: chrono::NaiveDateTime,
@@ -34,7 +33,6 @@ pub struct AccessToken {
 #[table_name = "access_tokens"]
 pub struct NewAccessToken {
     pub user_id: i32,
-    pub token_type: i32,
     pub access_token: std::string::String,
     pub refresh_token: std::string::String,
     pub created_at: chrono::NaiveDateTime,

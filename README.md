@@ -9,7 +9,7 @@ The project is still (as you can see) under development, there are no plans to r
 
 Open endpoints require no Authentication.
 
-* [Account Creation](readme/users.md) : `POST /users`
+* [Account Creation](readme/users.md) : `POST /create`
 * [Access Token](readme/auth.md) : `POST /auth`
 * [Refresh Token](readme/refresh.md) : `POST /refresh`
 
@@ -30,10 +30,6 @@ Token is provided with the request:
 #### Files related
 * [Upload Images](readme/files/upload.md) : `POST /api/files/upload`
 * [Get Image](readme/files/get.md) : `GET /api/files/get/{filename}`
-
-#### Special (token)
-* [Special Token](readme/special/token.md) : `GET /api/special/token`
-* [Special KeepAlive](readme/special/token_keepalive.md) : `PATCH /api/special/token_keepalive`
 
 
 ## Windows (WSL2) port forwarding

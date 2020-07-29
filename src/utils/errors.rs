@@ -78,7 +78,7 @@ impl ResponseError for AppError {
         match self.error_type {
             AppErrorType::KeyAlreadyExists => StatusCode::CONFLICT,
             AppErrorType::InvalidToken => StatusCode::UNAUTHORIZED,
-            AppErrorType::InvalidCrendetials => StatusCode::UNAUTHORIZED,
+            AppErrorType::InvalidCrendetials => StatusCode::FORBIDDEN,
             AppErrorType::InvalidRequest => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }

@@ -38,14 +38,7 @@ fn email_valid(input_email: &str) -> bool {
     email_regex.is_match(input_email)
 }
 
-pub async fn add_user(
-    db: web::Data<Pool>,
-    item: web::Json<InputUser>,
-) -> Result<HttpResponse, AppError> {
-    Ok(add_single_user(db, item)?)
-}
-
-fn add_single_user(
+pub async fn create_user(
     db: web::Data<Pool>,
     item: web::Json<InputUser>,
 ) -> Result<HttpResponse, AppError> {
@@ -111,7 +104,6 @@ fn auth_single_user(
             if matches.is_ok() && matches.unwrap() {
                 let new_access_token = NewAccessToken {
                     user_id: info.0,
-                    token_type: 1,
                     access_token: nanoid!(64),
                     refresh_token: nanoid!(64),
                     created_at: chrono::Local::now().naive_local(),
@@ -158,7 +150,6 @@ fn auth_refresh_token(
         Ok(user_idd) => {
             let new_access_token = NewAccessToken {
                 user_id: user_idd,
-                token_type: 1,
                 access_token: nanoid!(64),
                 refresh_token: nanoid!(64),
                 created_at: chrono::Local::now().naive_local(),

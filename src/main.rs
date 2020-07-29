@@ -26,21 +26,21 @@ pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub fn validate_token(
     token: &str,
     pool: web::Data<Pool>,
-) -> Result<(bool, std::string::String, i32, &str), AppError> {
+) -> Result<(bool, std::string::String), AppError> {
     let conn = pool.get()?;
     let access_token_f = access_tokens
         .filter(access_token.eq(token))
-        .select((user_id, expire_at, token_type))
-        .first::<(i32, chrono::NaiveDateTime, i32)>(&conn);
+        .select((user_id, expire_at))
+        .first::<(i32, chrono::NaiveDateTime)>(&conn);
     match access_token_f {
         Ok(info) => {
             if chrono::Local::now().naive_local() - Duration::hours(2) < info.1 {
-                Ok((true, info.0.to_string(), info.2, token))
+                Ok((true, info.0.to_string()))
             } else {
                 Err(AppError {
                     message: None,
                     cause: None,
-                    error_type: AppErrorType::InvalidToken,
+                    error_type: AppErrorType::InvalidCrendetials,
                 })
             }
         }
@@ -68,16 +68,6 @@ async fn validator(
                     header::HeaderName::from_str("user_id").unwrap(),
                     header::HeaderValue::from_str(&res.1).unwrap(),
                 );
-                req.headers_mut().insert(
-                    header::HeaderName::from_str("token_type").unwrap(),
-                    header::HeaderValue::from_str(&res.2.to_string()).unwrap(),
-                );
-                if res.2 == 2 {
-                    req.headers_mut().insert(
-                        header::HeaderName::from_str("token").unwrap(),
-                        header::HeaderValue::from_str(&res.3).unwrap(),
-                    );
-                }
                 Ok(req)
             } else {
                 Err(AuthenticationError::from(config).into())
@@ -118,7 +108,7 @@ async fn main() -> std::io::Result<()> {
             .data(pool.clone())
             .route("/auth", web::post().to(routes_auth::auth_user))
             .route("/refresh", web::post().to(routes_auth::refresh_user))
-            .route("/users", web::post().to(routes_auth::add_user))
+            .route("/create", web::post().to(routes_auth::create_user))
             .service(
                 web::scope("/api")
                     .wrap(auth)
@@ -126,14 +116,6 @@ async fn main() -> std::io::Result<()> {
                         web::scope("/users")
                             .route("/me", web::get().to(routes_api::get_me))
                             .route("/mine", web::get().to(routes_api::get_mine)),
-                    )
-                    .service(
-                        web::scope("/special")
-                            .route("token", web::get().to(routes_api::get_specialtoken))
-                            .route(
-                                "token_keepalive",
-                                web::patch().to(routes_api::patch_specialtoken_keepalive),
-                            ),
                     )
                     .service(
                         web::scope("/files")

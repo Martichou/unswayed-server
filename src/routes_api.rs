@@ -1,6 +1,5 @@
-use super::models::{AccessToken, Image, NewAccessToken};
+use super::models::Image;
 use super::s3_utils::upload::{save_file, split_payload};
-use super::schema::access_tokens::dsl::{access_token, access_tokens, expire_at};
 use super::schema::images::dsl::*;
 use super::schema::users::dsl::*;
 use super::Pool;
@@ -13,9 +12,6 @@ use crate::utils::errors::{AppError, AppErrorType};
 
 use actix_multipart::Multipart;
 use actix_web::{web, HttpRequest, HttpResponse};
-use chrono::Duration;
-use diesel::dsl::insert_into;
-use nanoid::nanoid;
 use rusoto_core::Region;
 use rusoto_s3::S3;
 use rusoto_s3::{GetObjectRequest, S3Client};
@@ -29,14 +25,6 @@ pub struct InfoUser {
 
 fn get_user_id(req: &HttpRequest) -> Option<&str> {
     req.headers().get("user_id")?.to_str().ok()
-}
-
-fn get_token_type(req: &HttpRequest) -> Option<&str> {
-    req.headers().get("token_type")?.to_str().ok()
-}
-
-fn get_token(req: &HttpRequest) -> Option<&str> {
-    req.headers().get("token")?.to_str().ok()
 }
 
 pub async fn get_me(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
@@ -109,47 +97,5 @@ pub async fn get_file(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpRespo
             cause: None,
             error_type: AppErrorType::InvalidRequest,
         })
-    }
-}
-
-pub async fn get_specialtoken(
-    req: HttpRequest,
-    db: web::Data<Pool>,
-) -> Result<HttpResponse, AppError> {
-    let conn = db.get()?;
-    let user_id_f = get_user_id(&req).unwrap().parse::<i32>()?;
-    let new_access_token = NewAccessToken {
-        user_id: user_id_f,
-        token_type: 2,
-        access_token: nanoid!(64),
-        refresh_token: "none".to_string(),
-        created_at: chrono::Local::now().naive_local(),
-        expire_at: chrono::Local::now().naive_local() + Duration::hours(6),
-    };
-    Ok(insert_into(access_tokens)
-        .values(&new_access_token)
-        .get_result(&conn)
-        .map(|res: AccessToken| HttpResponse::Ok().json(res))?)
-}
-
-pub async fn patch_specialtoken_keepalive(
-    req: HttpRequest,
-    db: web::Data<Pool>,
-) -> Result<HttpResponse, AppError> {
-    let conn = db.get()?;
-    let token_type_f = get_token_type(&req).unwrap().parse::<i32>()?;
-    if token_type_f != 2 {
-        Err(AppError {
-            message: Some("The provided token is not a special token".to_string()),
-            cause: None,
-            error_type: AppErrorType::InvalidRequest,
-        })
-    } else {
-        let token_f = get_token(&req).expect("The token for the special token cannot be None");
-        let target = access_tokens.filter(access_token.eq(token_f));
-        Ok(diesel::update(target)
-            .set(expire_at.eq(chrono::Local::now().naive_local() + Duration::hours(6)))
-            .get_result(&conn)
-            .map(|res: AccessToken| HttpResponse::Ok().json(res))?)
     }
 }
