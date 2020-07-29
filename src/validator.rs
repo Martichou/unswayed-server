@@ -8,7 +8,6 @@ use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
 use actix_web_httpauth::extractors::AuthenticationError;
 use chrono::Duration;
 use diesel::prelude::*;
-use diesel::r2d2::ConnectionManager;
 use std::str::FromStr;
 
 pub fn validate_token(
@@ -48,7 +47,7 @@ pub async fn validator(
         .app_data::<Config>()
         .map(|data| data.get_ref().clone())
         .unwrap_or_else(Default::default);
-    let pool = req.app_data::<r2d2::Pool<ConnectionManager<PgConnection>>>();
+    let pool = req.app_data::<Pool>();
     match validate_token(credentials.token(), pool.unwrap()) {
         Ok(res) => {
             if res.0 {
