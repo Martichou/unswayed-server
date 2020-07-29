@@ -9,7 +9,7 @@ The project is still (as you can see) under development, there are no plans to r
 
 Open endpoints require no Authentication.
 
-* [Account Creation](readme/users.md) : `POST /create`
+* [Account Creation](readme/create.md) : `POST /create`
 * [Access Token](readme/auth.md) : `POST /auth`
 * [Refresh Token](readme/refresh.md) : `POST /refresh`
 

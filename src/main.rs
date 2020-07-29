@@ -2,80 +2,20 @@
 extern crate diesel;
 extern crate argon2;
 
+mod endpoints;
 mod models;
-mod routes_api;
-mod routes_auth;
 mod s3_utils;
 mod schema;
 mod utils;
+mod validator;
 
-use actix_web::{dev::ServiceRequest, http::header, web, App, Error, HttpServer};
-use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
-use actix_web_httpauth::extractors::AuthenticationError;
+use actix_web::{web, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
-use chrono::Duration;
 use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
-use schema::access_tokens::dsl::*;
-use std::str::FromStr;
-use utils::errors::{AppError, AppErrorType};
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
-
-pub fn validate_token(
-    token: &str,
-    pool: web::Data<Pool>,
-) -> Result<(bool, std::string::String), AppError> {
-    let conn = pool.get()?;
-    let access_token_f = access_tokens
-        .filter(access_token.eq(token))
-        .select((user_id, expire_at))
-        .first::<(i32, chrono::NaiveDateTime)>(&conn);
-    match access_token_f {
-        Ok(info) => {
-            if chrono::Local::now().naive_local() - Duration::hours(2) < info.1 {
-                Ok((true, info.0.to_string()))
-            } else {
-                Err(AppError {
-                    message: None,
-                    cause: None,
-                    error_type: AppErrorType::InvalidCrendetials,
-                })
-            }
-        }
-        Err(_) => Err(AppError {
-            message: None,
-            cause: None,
-            error_type: AppErrorType::InvalidToken,
-        }),
-    }
-}
-
-async fn validator(
-    mut req: ServiceRequest,
-    credentials: BearerAuth,
-) -> Result<ServiceRequest, Error> {
-    let config = req
-        .app_data::<Config>()
-        .map(|data| data.get_ref().clone())
-        .unwrap_or_else(Default::default);
-    let pool = req.app_data::<r2d2::Pool<ConnectionManager<PgConnection>>>();
-    match validate_token(credentials.token(), pool.unwrap()) {
-        Ok(res) => {
-            if res.0 {
-                req.headers_mut().insert(
-                    header::HeaderName::from_str("user_id").unwrap(),
-                    header::HeaderValue::from_str(&res.1).unwrap(),
-                );
-                Ok(req)
-            } else {
-                Err(AuthenticationError::from(config).into())
-            }
-        }
-        Err(res) => Err(res.into()),
-    }
-}
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -103,24 +43,30 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to create pool.");
 
     HttpServer::new(move || {
-        let auth = HttpAuthentication::bearer(validator);
+        let auth = HttpAuthentication::bearer(validator::validator);
         App::new()
             .data(pool.clone())
-            .route("/auth", web::post().to(routes_auth::auth_user))
-            .route("/refresh", web::post().to(routes_auth::refresh_user))
-            .route("/create", web::post().to(routes_auth::create_user))
+            .route("/auth", web::post().to(endpoints::auth::auth_user))
+            .route("/refresh", web::post().to(endpoints::refresh::refresh_user))
+            .route("/create", web::post().to(endpoints::create::create_user))
             .service(
                 web::scope("/api")
                     .wrap(auth)
                     .service(
                         web::scope("/users")
-                            .route("/me", web::get().to(routes_api::get_me))
-                            .route("/mine", web::get().to(routes_api::get_mine)),
+                            .route("/me", web::get().to(endpoints::api_users_me::me))
+                            .route("/mine", web::get().to(endpoints::api_users_mine::mine)),
                     )
                     .service(
                         web::scope("/files")
-                            .route("/upload", web::post().to(routes_api::post_upload_one))
-                            .route("/get/{filename}", web::get().to(routes_api::get_file)),
+                            .route(
+                                "/upload",
+                                web::post().to(endpoints::api_files_upload::upload),
+                            )
+                            .route(
+                                "/get/{filename}",
+                                web::get().to(endpoints::api_files_get::get),
+                            ),
                     ),
             )
     })

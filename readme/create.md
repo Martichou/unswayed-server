@@ -1,8 +1,8 @@
-# Users
+# Create
 
 Used to register a user in the database.
 
-**URL** : `/users`
+**URL** : `/Create`
 
 **Method** : `POST`
 
