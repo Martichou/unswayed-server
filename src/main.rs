@@ -55,7 +55,11 @@ async fn main() -> std::io::Result<()> {
                     .service(
                         web::scope("/users")
                             .route("/me", web::get().to(endpoints::api_users_me::me))
-                            .route("/mine", web::get().to(endpoints::api_users_mine::mine)),
+                            .route("/mine", web::get().to(endpoints::api_users_mine::mine))
+                            .route(
+                                "/mine_paged",
+                                web::get().to(endpoints::api_users_mine_paged::mine_paged),
+                            ),
                     )
                     .service(
                         web::scope("/files")
@@ -70,8 +74,8 @@ async fn main() -> std::io::Result<()> {
                     ),
             )
     })
-    //.bind(binding)?
-    .bind_openssl(binding, builder)?
+    .bind(binding)?
+    //.bind_openssl(binding, builder)?
     .run()
     .await
 }

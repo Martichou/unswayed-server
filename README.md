@@ -26,6 +26,7 @@ Token is provided with the request:
 #### Users informations
 * [Me](readme/users/me.md) : `GET /api/users/me`
 * [List Images](readme/users/mine.md) : `GET /api/users/mine`
+* [List Images Paged](readme/users/mine_paged.md) : `GET /api/users/mine_paged`
 
 #### Files related
 * [Upload Images](readme/files/upload.md) : `POST /api/files/upload`
