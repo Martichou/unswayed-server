@@ -33,11 +33,47 @@ Token is provided with the request:
 * [Get Image](readme/files/get.md) : `GET /api/files/get/{filename}`
 
 
+## Server setup
+
+You first need to install Rust (ofc)
+
+``sh
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+``
+
+
+Then you have to setup a postgresql server.
+So add the repo to the apt list
+
+``sh
+$ sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+``
+
+``sh
+$ wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+``
+
+``sh
+$ sudo apt-get update
+``
+
+And finally install postgresql-12 (tested)
+
+``sh
+$ sudo apt-get install postgresql-12
+``
+
+In addition you have to install the diesel_cli using the following command
+
+``sh
+$ cargo install diesel_cli --no-default-features --features postgres
+``
+
 ## Windows (WSL2) port forwarding
 If you're working on Windows using WSL2 you might need to forward the port from the host to wsl.
 
 ``sh
-netsh interface portproxy add v4tov4 listenport=8080 listenaddress=192.168.1.19 connectport=8080 connectaddress=172.20.14.205
+$ netsh interface portproxy add v4tov4 listenport=8080 listenaddress=192.168.1.19 connectport=8080 connectaddress=172.20.14.205
 ``
 
 ## Contributing
