@@ -74,8 +74,8 @@ async fn main() -> std::io::Result<()> {
                     ),
             )
     })
-    .bind(binding)?
-    //.bind_openssl(binding, builder)?
+    //.bind(binding)?
+    .bind_openssl(binding, builder)?
     .run()
     .await
 }
