@@ -28,4 +28,4 @@ serde = "1.0"
 rust-argon2 = "0.8"
 rand = "0.7.3"
 openssl = { version = "0.10", features = ["vendored"] }
-async-std = "1.6.2"
+async-std = "1.6.3"
