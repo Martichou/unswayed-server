@@ -9,7 +9,7 @@ mod schema;
 mod utils;
 mod validator;
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, middleware, App, HttpServer};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use diesel::prelude::*;
 use diesel::r2d2::ConnectionManager;
@@ -20,7 +20,11 @@ pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
-    std::env::set_var("RUST_LOG", "actix_web=debug");
+    
+    // Init logging
+    std::env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
+    env_logger::init();
+
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let binding = std::env::var("BINDING").expect("BINDING must be set");
     let key = std::env::var("KEY_PRIV").expect("BINDING must be set");
@@ -45,6 +49,8 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let auth = HttpAuthentication::bearer(validator::validator);
         App::new()
+            .wrap(middleware::Compress::default())
+            .wrap(middleware::Logger::default())
             .data(pool.clone())
             .route("/auth", web::post().to(endpoints::auth::auth_user))
             .route("/refresh", web::post().to(endpoints::refresh::refresh_user))
