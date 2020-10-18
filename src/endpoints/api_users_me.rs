@@ -18,16 +18,11 @@ pub struct InfoUser {
 
 pub async fn me(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>()?;
-    Ok(web::block(move || me_info(user_id_f, db))
-        .await
-        .map(|user| HttpResponse::Ok().json(user))?)
-}
-
-fn me_info(user_id_f: i32, pool: web::Data<Pool>) -> Result<InfoUser, AppError> {
-    let conn = pool.get()?;
-    Ok(users
+    let conn = db.get()?;
+    let res = users
         .filter(id.eq(&user_id_f))
         .select(email)
         .first::<String>(&conn)
-        .map(|emailstd| InfoUser { email: emailstd })?)
+        .map(|emailstd| InfoUser { email: emailstd })?;
+    Ok(HttpResponse::Ok().json(res))
 }

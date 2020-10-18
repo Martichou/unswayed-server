@@ -30,24 +30,12 @@ pub async fn mine_paged(
             error_type: AppErrorType::InvalidRequest,
         })
     } else {
-        Ok(
-            web::block(move || mine_paged_list(user_id_f, db, info.size, info.page))
-                .await
-                .map(|res| HttpResponse::Ok().json(res))?,
-        )
+        let conn = db.get()?;
+        let res: std::vec::Vec<Image> = images
+            .filter(user_id.eq(user_id_f))
+            .limit(info.size)
+            .offset(info.page * info.size)
+            .load(&conn)?;
+        Ok(HttpResponse::Ok().json(res))
     }
-}
-
-fn mine_paged_list(
-    user_id_f: i32,
-    pool: web::Data<Pool>,
-    size: i64,
-    page: i64,
-) -> Result<std::vec::Vec<Image>, AppError> {
-    let conn = pool.get()?;
-    Ok(images
-        .filter(user_id.eq(user_id_f))
-        .limit(size)
-        .offset(page * size)
-        .load(&conn)?)
 }

@@ -8,7 +8,6 @@ use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
 use actix_web_httpauth::extractors::AuthenticationError;
 use chrono::Duration;
 use diesel::prelude::*;
-use std::str::FromStr;
 
 pub fn validate_token(
     token: &str,
@@ -52,7 +51,7 @@ pub async fn validator(
         Ok(res) => {
             if res.0 {
                 req.headers_mut().insert(
-                    header::HeaderName::from_str("user_id").unwrap(),
+                    header::HeaderName::from_static("user_id"),
                     header::HeaderValue::from_str(&res.1).unwrap(),
                 );
                 Ok(req)

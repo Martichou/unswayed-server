@@ -2,7 +2,7 @@ use crate::diesel::BoolExpressionMethods;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
-use crate::models::NewImage;
+use crate::models::{NewImage, Pool};
 use crate::schema::images::dsl::*;
 
 use super::s3client::Client;
@@ -10,15 +10,11 @@ use super::s3client::Client;
 use actix_multipart::Multipart;
 use actix_web::{web, Error};
 use diesel::dsl::{exists, insert_into, select};
-use diesel::prelude::PgConnection;
-use diesel::r2d2::ConnectionManager;
 use futures::{StreamExt, TryStreamExt};
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
 use std::convert::From;
 use std::io::Write;
-
-type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UploadFile {
@@ -88,10 +84,8 @@ pub async fn split_payload(
                         exists(images.filter(realname.eq(filename).and(user_id.eq(user_id_f)))),
                     )
                     .get_result(&conn);
-                    // If found or error skip
                     if item_exist.is_err() || item_exist.unwrap() {
                         continue;
-                    // Else process
                     } else {
                         let tmp_file =
                             Tmpfile::new(nanoid!(128), &sanitize_filename::sanitize(&filename));

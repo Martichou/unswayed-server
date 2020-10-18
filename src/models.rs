@@ -1,7 +1,10 @@
 use crate::schema::*;
 
+use diesel::r2d2::ConnectionManager;
 use diesel::*;
 use serde::{Deserialize, Serialize};
+
+pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 pub struct User {
