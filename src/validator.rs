@@ -3,16 +3,15 @@ use crate::utils::errors::AppError;
 use crate::utils::errors::AppErrorType;
 use crate::Pool;
 
-use actix_web::{dev::ServiceRequest, http::header, web, Error};
-use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
-use actix_web_httpauth::extractors::AuthenticationError;
+use actix_web::{dev::ServiceRequest, http::header, Error};
+use actix_web_httpauth::extractors::{
+    AuthenticationError,
+    bearer::{BearerAuth, Config}
+};
 use chrono::Duration;
 use diesel::prelude::*;
 
-pub fn validate_token(
-    token: &str,
-    pool: web::Data<Pool>,
-) -> Result<(bool, std::string::String), AppError> {
+fn validate_token(token: &str, pool: &Pool) -> Result<(bool, std::string::String), AppError> {
     let conn = pool.get()?;
     let access_token_f = access_tokens
         .filter(access_token.eq(token))
@@ -42,12 +41,7 @@ pub async fn validator(
     mut req: ServiceRequest,
     credentials: BearerAuth,
 ) -> Result<ServiceRequest, Error> {
-    let config = req
-        .app_data::<Config>()
-        .map(|data| data.get_ref().clone())
-        .unwrap_or_else(Default::default);
-    let pool = req.app_data::<Pool>();
-    match validate_token(credentials.token(), pool.unwrap()) {
+    match validate_token(credentials.token(), req.app_data::<Pool>().unwrap()) {
         Ok(res) => {
             if res.0 {
                 req.headers_mut().insert(
@@ -56,6 +50,9 @@ pub async fn validator(
                 );
                 Ok(req)
             } else {
+                let config = req.app_data::<Config>()
+                    .map(|data| data.clone())
+                    .unwrap_or_else(Default::default);
                 Err(AuthenticationError::from(config).into())
             }
         }
