@@ -5,8 +5,8 @@ use crate::Pool;
 
 use actix_web::{dev::ServiceRequest, http::header, Error};
 use actix_web_httpauth::extractors::{
+    bearer::{BearerAuth, Config},
     AuthenticationError,
-    bearer::{BearerAuth, Config}
 };
 use chrono::Duration;
 use diesel::prelude::*;
@@ -50,8 +50,9 @@ pub async fn validator(
                 );
                 Ok(req)
             } else {
-                let config = req.app_data::<Config>()
-                    .map(|data| data.clone())
+                let config = req
+                    .app_data::<Config>()
+                    .cloned()
                     .unwrap_or_else(Default::default);
                 Err(AuthenticationError::from(config).into())
             }
