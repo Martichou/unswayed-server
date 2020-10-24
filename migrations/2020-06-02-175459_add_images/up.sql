@@ -1,4 +1,4 @@
-CREATE TABLE images (
+CREATE TABLE ufile (
 	id SERIAL NOT NULL PRIMARY KEY,
 	user_id INT NOT NULL,
 	realname TEXT NOT NULL,

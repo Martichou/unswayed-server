@@ -21,6 +21,7 @@ pub struct InputUser {
     pub passwd: String,
 }
 
+// TODO - Protect this by role (access_token with right)
 pub async fn create_user(
     db: web::Data<Pool>,
     item: web::Json<InputUser>,

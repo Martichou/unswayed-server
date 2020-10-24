@@ -9,7 +9,7 @@ use actix_multipart::Multipart;
 use actix_web::{web, HttpRequest, HttpResponse};
 use std::borrow::BorrowMut;
 
-pub async fn upload(
+pub async fn upload_files(
     req: HttpRequest,
     mut payload: Multipart,
     db: web::Data<Pool>,

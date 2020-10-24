@@ -16,7 +16,7 @@ pub struct InfoUser {
     pub email: String,
 }
 
-pub async fn me(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
+pub async fn my_info(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>()?;
     let conn = db.get()?;
     let res = users

@@ -1,8 +1,8 @@
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
-use crate::models::Image;
-use crate::schema::images::dsl::*;
+use crate::models::UFile;
+use crate::schema::ufile::dsl::*;
 use crate::utils::errors::{AppError, AppErrorType};
 use crate::utils::get_user_id::get_user_id;
 use crate::Pool;
@@ -17,7 +17,7 @@ pub struct PagedInfo {
     pub page: i64,
 }
 
-pub async fn mine_paged(
+pub async fn my_files(
     req: HttpRequest,
     db: web::Data<Pool>,
     info: web::Json<PagedInfo>,
@@ -31,7 +31,7 @@ pub async fn mine_paged(
         })
     } else {
         let conn = db.get()?;
-        let res: std::vec::Vec<Image> = images
+        let res: std::vec::Vec<UFile> = ufile
             .filter(user_id.eq(user_id_f))
             .limit(info.size)
             .offset(info.page * info.size)

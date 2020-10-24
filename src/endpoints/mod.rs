@@ -1,8 +1,7 @@
-pub mod api_files_get;
-pub mod api_files_upload;
-pub mod api_users_me;
-pub mod api_users_mine;
-pub mod api_users_mine_paged;
-pub mod auth;
-pub mod create;
-pub mod refresh;
+pub mod auth_user;
+pub mod create_user;
+pub mod get_file;
+pub mod my_files;
+pub mod my_info;
+pub mod refresh_token;
+pub mod upload_files;

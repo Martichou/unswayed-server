@@ -10,7 +10,7 @@ table! {
 }
 
 table! {
-    images (id) {
+    ufile (id) {
         id -> Int4,
         user_id -> Int4,
         realname -> Text,
@@ -28,4 +28,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(access_tokens, images, users,);
+allow_tables_to_appear_in_same_query!(access_tokens, ufile, users,);

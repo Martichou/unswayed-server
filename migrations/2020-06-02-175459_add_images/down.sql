@@ -1,1 +1,1 @@
-DROP TABLE images;
+DROP TABLE ufile;

@@ -1,6 +1,6 @@
 use crate::utils::get_user_id::get_user_id;
 
-use crate::schema::images::dsl::*;
+use crate::schema::ufile::dsl::*;
 use crate::Pool;
 
 use crate::diesel::BoolExpressionMethods;
@@ -14,11 +14,11 @@ use rusoto_core::Region;
 use rusoto_s3::S3;
 use rusoto_s3::{GetObjectRequest, S3Client};
 
-pub async fn get(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
-    let conn = db.get()?;
+pub async fn get_file(req: HttpRequest, db: web::Data<Pool>) -> Result<HttpResponse, AppError> {
     let user_id_f = get_user_id(&req).unwrap().parse::<i32>()?;
     let filename = sanitize_filename::sanitize(req.match_info().query("filename"));
-    let item_f = images
+    let conn = db.get()?;
+    let item_f = ufile
         .filter(realname.eq(&filename).and(user_id.eq(user_id_f)))
         .select(fakedname)
         .first::<String>(&conn);

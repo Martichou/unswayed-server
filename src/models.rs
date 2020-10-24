@@ -32,7 +32,7 @@ pub struct AccessToken {
     pub expire_at: chrono::NaiveDateTime,
 }
 
-#[derive(Insertable, Debug)]
+#[derive(Insertable, Debug, Serialize)]
 #[table_name = "access_tokens"]
 pub struct NewAccessToken {
     pub user_id: i32,
@@ -43,7 +43,8 @@ pub struct NewAccessToken {
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
-pub struct Image {
+#[table_name = "ufile"]
+pub struct UFile {
     pub id: i32,
     pub user_id: i32,
     pub realname: std::string::String,
@@ -52,8 +53,8 @@ pub struct Image {
 }
 
 #[derive(Insertable, Debug)]
-#[table_name = "images"]
-pub struct NewImage {
+#[table_name = "ufile"]
+pub struct NewUFile {
     pub user_id: i32,
     pub realname: std::string::String,
     pub fakedname: std::string::String,

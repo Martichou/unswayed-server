@@ -2,7 +2,7 @@ use crate::argon2;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
-use crate::models::{AccessToken, NewAccessToken};
+use crate::models::NewAccessToken;
 use crate::schema::access_tokens::dsl::*;
 use crate::schema::users::dsl::*;
 use crate::utils::email_valid::email_valid;
@@ -26,15 +26,6 @@ pub async fn auth_user(
     db: web::Data<Pool>,
     item: web::Json<InputUser>,
 ) -> Result<HttpResponse, AppError> {
-    Ok(web::block(move || auth_single_user(db, item))
-        .await
-        .map(|access| HttpResponse::Created().json(access))?)
-}
-
-fn auth_single_user(
-    db: web::Data<Pool>,
-    item: web::Json<InputUser>,
-) -> Result<AccessToken, AppError> {
     let conn = db.get()?;
     if !email_valid(&item.email) {
         return Err(AppError {
@@ -61,9 +52,10 @@ fn auth_single_user(
                     created_at: chrono::Local::now().naive_local(),
                     expire_at: chrono::Local::now().naive_local() + Duration::hours(2),
                 };
-                Ok(insert_into(access_tokens)
+                insert_into(access_tokens)
                     .values(&new_access_token)
-                    .get_result(&conn)?)
+                    .execute(&conn)?;
+                Ok(HttpResponse::Created().json(new_access_token))
             } else {
                 Err(AppError {
                     message: None,

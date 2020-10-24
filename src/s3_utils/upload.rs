@@ -2,8 +2,8 @@ use crate::diesel::BoolExpressionMethods;
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::diesel::RunQueryDsl;
-use crate::models::{NewImage, Pool};
-use crate::schema::images::dsl::*;
+use crate::models::{NewUFile, Pool};
+use crate::schema::ufile::dsl::*;
 
 use super::s3client::Client;
 
@@ -81,7 +81,7 @@ pub async fn split_payload(
                 Some(filename) => {
                     // Check if the filename already exist for that user
                     let item_exist: std::result::Result<bool, diesel::result::Error> = select(
-                        exists(images.filter(realname.eq(filename).and(user_id.eq(user_id_f)))),
+                        exists(ufile.filter(realname.eq(filename).and(user_id.eq(user_id_f)))),
                     )
                     .get_result(&conn);
                     if item_exist.is_err() || item_exist.unwrap() {
@@ -123,13 +123,13 @@ pub async fn save_file(
         let mut tmp_file: Tmpfile = item.clone();
         tmp_file.s3_upload_and_tmp_remove().await;
         // Add to database (here?) Maybe check for error but need to investigate more on this
-        let new_image = NewImage {
+        let new_image = NewUFile {
             user_id: user_id_f,
             realname: tmp_file.realname.clone(),
             fakedname: tmp_file.name.clone(),
             created_at: chrono::Local::now().naive_local(),
         };
-        let res = insert_into(images).values(&new_image).execute(&conn);
+        let res = insert_into(ufile).values(&new_image).execute(&conn);
         if res.is_ok() {
             arr.push(UploadFile::from(tmp_file));
         }
